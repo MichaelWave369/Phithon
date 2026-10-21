@@ -11,10 +11,11 @@ import { validateVibeProofBrief, inspectVibeProofBriefJson, createVibeProofCorre
 import { parseVibeVectorsJson, runVibeBehaviorVectors, MAX_VIBE_VECTORS_BYTES } from "./bridge/vibe-behavior.js";
 import { parseVibePropertyPlanJson, runVibePropertyPlan, MAX_VIBE_PROPERTIES_BYTES } from "./bridge/vibe-properties.js";
 import { parseVibeObligationBindingsJson, buildVibeObligationLedger, MAX_VIBE_OBLIGATION_BINDINGS_BYTES } from "./bridge/vibe-obligations.js";
+import { parseFullVibeProofJson, buildFullVibeObligationLedger, MAX_VIBE_FULL_PROOF_BYTES } from "./bridge/vibe-full-proof.js";
 import { validateLocalDispatch, makeDispatchJournal, dispatchAuthorizedLocal } from "./brain/dispatch-local.js";
 
 const HELP = [
-  "PhiThon R13 · The Language of the Field",
+  "PhiThon R14 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
@@ -31,6 +32,7 @@ const HELP = [
   "  npm run phi -- vibe-behavior link.json intent-brief.json contract.vibe implementation.phi vectors.json --out behavior-report.json",
   "  npm run phi -- vibe-properties link.json intent-brief.json contract.vibe implementation.phi properties.json --out property-report.json",
   "  npm run phi -- vibe-obligations proof-brief.json correspondence.json link.json intent-brief.json contract.vibe implementation.phi behavior-report.json property-report.json bindings.json --out evidence-ledger.json",
+  "  npm run phi -- vibe-full-obligations full.vibe.proof.json proof-brief.json correspondence.json link.json intent-brief.json contract.vibe implementation.phi behavior-report.json property-report.json bindings.json --out complete-ledger.json",
   "  npm run phi -- vibe-proof-link link.json proof-brief.json intent-brief.json contract.vibe implementation.phi --out correspondence.json",
   "  npm run phi -- vibe-proof-link-check correspondence.json link.json proof-brief.json intent-brief.json contract.vibe implementation.phi",
   "  npm run phi -- vibe-link my-intent-brief.json contract.vibe implementation.phi --out link.json",
@@ -58,6 +60,8 @@ const HELP = [
   "vibe-properties generates bounded, deterministic numeric inputs for a human-declared property.",
   "Seeded finite sample matches are NOT universal proof or trusted execution attestation.",
   "vibe-obligations maps reviewed associations to Vibe\x27s proof SAMPLE only; no verification promotion.",
+  "vibe-full-obligations uses an original Vibe v1 proof artifact to map ALL reported obligations.",
+  "Complete record inventory is NOT authenticated verification or full behavioral coverage.",
   "Vibe is an independent intent compiler; PhiPython is Vibe\x27s guided Python layer, NOT PhiThon.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
@@ -430,9 +434,55 @@ async function vibeObligationsCommand(proofPath, correspondencePath, linkPath, b
   }
 }
 
+async function vibeFullObligationsCommand(fullPath, proofPath, correspondencePath,
+  linkPath, briefPath, vibePath, phiPath, behaviorPath, propertyPath,
+  bindingsPath, outPath) {
+  try {
+    const proofBrief=await readVibeProofBrief(proofPath);
+    const fullRaw=await readLimited(fullPath,MAX_VIBE_FULL_PROOF_BYTES);
+    parseFullVibeProofJson(fullRaw,proofBrief); // refuse before reading auxiliary inputs
+    const fullProof=JSON.parse(fullRaw);
+    const correspondence=JSON.parse(await readLimited(correspondencePath,40_000));
+    const link=JSON.parse(await readLimited(linkPath,40_000));
+    const intentBrief=await readVibeBrief(briefPath);
+    const vibeSource=await readLimited(vibePath,100_000);
+    const phiSource=await readLimited(phiPath,100_000);
+    const modules=await loadProjectModules(phiPath);
+    const behaviorReport=JSON.parse(await readLimited(behaviorPath,100_000));
+    const propertyReport=JSON.parse(await readLimited(propertyPath,100_000));
+    const bindings=parseVibeObligationBindingsJson(
+      await readLimited(bindingsPath,MAX_VIBE_OBLIGATION_BINDINGS_BYTES),
+      proofBrief
+    );
+    // A full-proof mapping may contain associations beyond the first ten.
+    const rawBindings=JSON.parse(await readLimited(bindingsPath,MAX_VIBE_OBLIGATION_BINDINGS_BYTES));
+    const record=await buildFullVibeObligationLedger({
+      fullProof,link,intentBrief,proofBrief,correspondence,vibeSource,phiSource,
+      modules,behaviorReport,propertyReport,bindings:rawBindings
+    });
+    await writeFile(outPath,JSON.stringify(record,null,2)+"\n",{
+      encoding:"utf8",flag:"wx",mode:0o600
+    });
+    console.log("PHIVIBE FULL OBLIGATIONS: COMPLETE UNATTESTED INVENTORY");
+    console.log("Original proof obligations:",record.obligationsInFullArtifact,
+      "brief sample:",record.obligationsInCompactBrief);
+    console.log("Sampled obligations with test associations:",record.associatedSampledObligations,
+      "without exclusively matching test reports:",record.unresolvedSampledObligations);
+    console.log("Report:",outPath);
+    console.log("Full inventory != authenticated proof or semantic coverage.");
+  } catch(error) {
+    console.error("PHIVIBE FULL OBLIGATIONS REFUSED:",
+      error instanceof Error?error.message:String(error));
+    process.exitCode=1;
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
+} else if (args[0] === "vibe-full-obligations" && args.length === 13 && args[11] === "--out") {
+  await vibeFullObligationsCommand(args[1],args[2],args[3],args[4],args[5],args[6],
+    args[7],args[8],args[9],args[10],args[12]);
 } else if (args[0] === "vibe-obligations" && args.length === 12 && args[10] === "--out") {
   await vibeObligationsCommand(args[1], args[2], args[3], args[4], args[5], args[6],
     args[7], args[8], args[9], args[11]);
@@ -475,7 +525,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R13, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R14, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();
