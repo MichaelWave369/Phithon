@@ -2,7 +2,20 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R1 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R2 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R2: Portable PhiLedger integrity receipts
+
+PhiThon R2 creates SHA-256 chain receipts covering the program source, output, step count and SIMULATED ledger events. Browser controls export receipts and verify JSON imported from elsewhere.
+
+Command line:
+
+```sh
+npm run phi -- --receipt examples/modules.phi
+npm run phi -- verify examples/modules.phi.receipt.json
+```
+
+**An internally valid SHA-256 hash is not proof of authorship or execution.** A different fabricated receipt can also verify. See [PhiLedger R2 protocol](docs/LEDGER.md).
 
 ## R1: Optional modules and a cancellable playground
 
@@ -60,7 +73,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0 and R1
+## Shipped in R0, R1 and R2
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -69,6 +82,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - Source/token/step/output/call-depth limits
 - R1 opt-in numeric and toy graph modules (`use math`, `use nbg`)
 - R1 browser Worker with deadline and cancellation
+- R2 SHA-256 chained JSON receipts with import/export validation
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -88,9 +102,9 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R2: stronger syntax, package tools, richer library and isolated CLI processes.
-R3: explicit capability enforcement, audited adapters and proper signed receipts.
-Future: reviewed adapters for SPV, NBG and WhiteHatLedger369.
+R3: stronger syntax, package tools, richer library and isolated CLI processes.
+Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
+Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
 The core language will never silently grant file, shell, or network access.
 
