@@ -2,7 +2,20 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R9 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R10 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R10: Source-bound Vibe proof-report correspondence
+
+PhiThon can now inspect Vibe's real Phase 8.4 `proof-brief` JSON, which summarizes Vibe's own verification results. A separate, optional correspondence record revalidates the R9 `.vibe`/`.phi` source link and confirms the imported proof report **claims the same Vibe source hash**.
+
+```sh
+# Generate the proof brief separately using the Vibe compiler first.
+npm run phi -- vibe-proof-inspect proof-brief.json
+npm run phi -- vibe-proof-link vibe-phi-link.json proof-brief.json intent-brief.json contract.vibe implementation.phi --out correspondence.json
+npm run phi -- vibe-proof-link-check correspondence.json vibe-phi-link.json proof-brief.json intent-brief.json contract.vibe implementation.phi
+```
+
+**Reported PASS is not independent verification.** No `.phi` program runs during reconciliation, the original Vibe proof artifact is not cryptographically authenticated, and semantic equivalence is **not** established. The browser has a separate local proof-brief inspector with explicit self-reported labels. [Full Phase 8.4 R10 contract and security limitations](docs/VIBE-BRIDGE.md).
 
 ## R9: PhiVibe source-hash intent bridge
 
@@ -164,7 +177,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0 through R9
+## Shipped in R0 through R10
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -181,6 +194,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R7 CLI-only explicitly confirmed local Ollama dispatch (one selected request; no SPV integration)
 - R8 strict, read-only SPV portable Evidence Bench v0.1 import with provenance-safe summaries
 - R9 Vibe Phase 8.4 intent brief import and hash-bound declared PhiThon implementation links
+- R10 separately imported Vibe proof-brief self-reports, hash-correspondence and no automatic authority promotion
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -200,7 +214,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R10: Vibe verifier/proof-brief correspondence, separately reviewed live SPV API if one exists, and stronger OS-level confinement.
+R11: reviewed behavioral test vectors for Vibe/PhiThon, separately reviewed live SPV API if one exists, and stronger OS-level confinement.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
