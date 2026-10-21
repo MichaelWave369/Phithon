@@ -76,3 +76,14 @@ h1,h2{font-family:"Space Grotesk",sans-serif;margin:0;letter-spacing:-3px}h1{fon
 .brain-result{margin-top:14px;padding:12px;border:1px solid #416555;border-radius:4px;font:11px "DM Mono",monospace;color:#addcbd;background:#192f30}
 .brain-result .plain-button{margin-top:10px}
 @media(max-width:720px){.brain-workbench{padding:14px}}
+
+
+/* R8: read-only SPV Evidence Bench import and provenance-safe report */
+.spv-bench-panel{padding:18px 20px;border-top:1px solid #39455b;background:#111c2c}
+.spv-bench-hint{font-size:11px;line-height:1.65;color:#a9bac6;margin:10px 0}
+.spv-bench-hint strong{color:#d5e8df;letter-spacing:.6px}
+.spv-evidence-results{margin-top:13px;padding:12px;border:1px solid #3a5263;border-radius:5px;background:#162536}
+.spv-entries{max-height:220px;overflow:auto;margin-top:10px}
+.spv-entry{display:flex;flex-direction:column;gap:4px;border-top:1px solid #324959;padding:10px 0;font:11px "DM Mono",monospace;color:#d4e9e1}
+.spv-entry small{font-size:10px;color:#98b6c3}
+@media(max-width:720px){.spv-bench-panel{padding:14px}}
