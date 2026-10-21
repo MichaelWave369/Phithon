@@ -1,3 +1,5 @@
+import { analyzePackage, validateModuleRegistry } from "../language/package.js";
+
 /**
  * PhiLedger R2 - portable SHA-256 integrity receipts for PhiThon executions.
  *
@@ -9,6 +11,7 @@
  * every event link, the transcript/output, and the final receipt hash.
  */
 export const RECEIPT_SCHEMA = "phithon.execution-receipt.v1";
+export const PACKAGE_RECEIPT_SCHEMA = "phithon.execution-receipt.v2";
 const ALGORITHM = "SHA-256";
 const MAX_RECEIPT_CHARS = 750_000;
 
@@ -115,7 +118,7 @@ export async function createReceipt(source, execution, options = {}) {
  * Valid means self-consistent and unmodified *relative to its claimed hash*.
  * It does not authenticate the creator, attest execution, or prove a timestamp.
  */
-export async function verifyReceipt(receipt) {
+async function verifyLegacyReceipt(receipt) {
   try {
     exactKeys(receipt, ["schema", "algorithm", "createdAt", "sourceHash", "execution", "source", "genesisHash", "events", "headHash", "receiptHash"], "receipt");
     ensure(receipt.schema === RECEIPT_SCHEMA, "Unsupported receipt schema");
@@ -139,4 +142,110 @@ export async function verifyReceipt(receipt) {
   } catch (error) {
     return { valid: false, reason: error instanceof Error ? error.message : "Invalid receipt" };
   }
+}
+
+
+/**
+ * PhiLedger R5: a source-complete receipt for PhiPack programs.
+ *
+ * This v2 schema commits to ALL module source text in the local registry,
+ * including transitive and unused declared modules, with a canonical set hash.
+ * It is a self-consistent integrity record, NOT an authentication mechanism.
+ */
+export async function createPackageReceipt(source, execution, modules, options = {}) {
+  const names = validateModuleRegistry(modules);
+  ensure(names.length > 0, "Package receipt requires at least one module");
+  // Static dependency checks only; never executes the imported code.
+  analyzePackage(source, modules);
+
+  // Reuse v1's strict transcript, event, and timestamp validation.
+  const validated = await createReceipt(source, execution, options);
+  const moduleSources = {};
+  const moduleHashes = {};
+  for (const name of [...names].sort()) {
+    moduleSources[name] = modules[name];
+    moduleHashes[name] = await digest(modules[name]);
+  }
+  const moduleSetHash = await digest(canonical(moduleHashes));
+  const header = {
+    schema: PACKAGE_RECEIPT_SCHEMA,
+    algorithm: ALGORITHM,
+    createdAt: validated.createdAt,
+    sourceHash: validated.sourceHash,
+    moduleSetHash,
+    execution: validated.execution
+  };
+  const genesisHash = await digest(canonical(header));
+  let previousHash = genesisHash;
+  const events = [];
+  for (const e of validated.events) {
+    const item = {
+      sequence: e.sequence,
+      event: e.event,
+      data: e.data,
+      provenance: e.provenance,
+      previousHash
+    };
+    const hash = await digest(canonical(item));
+    events.push({ ...item, hash });
+    previousHash = hash;
+  }
+  const body = {
+    ...header,
+    source,
+    modules: moduleSources,
+    moduleHashes,
+    genesisHash,
+    events,
+    headHash: previousHash
+  };
+  const receiptHash = await digest(canonical(body));
+  const result = { ...body, receiptHash };
+  ensure(JSON.stringify(result).length <= MAX_RECEIPT_CHARS, "Package receipt too large");
+  return result;
+}
+
+async function verifyPackageReceipt(receipt) {
+  try {
+    exactKeys(receipt, [
+      "schema", "algorithm", "createdAt", "sourceHash", "moduleSetHash", "execution",
+      "source", "modules", "moduleHashes", "genesisHash", "events", "headHash", "receiptHash"
+    ], "v2 receipt");
+    ensure(receipt.schema === PACKAGE_RECEIPT_SCHEMA, "Unsupported package receipt schema");
+    ensure(receipt.algorithm === ALGORITHM, "Unsupported digest algorithm");
+    ensure(JSON.stringify(receipt).length <= MAX_RECEIPT_CHARS, "Receipt too large");
+    ensure(Array.isArray(receipt.events) && receipt.events.length <= 1000, "Invalid event chain");
+    const names = validateModuleRegistry(receipt.modules);
+    ensure(names.length > 0, "v2 receipt must include module sources");
+    exactKeys(receipt.moduleHashes, names, "module hashes");
+    for (const name of names) {
+      ensure(typeof receipt.moduleHashes[name] === "string" &&
+        /^[0-9a-f]{64}$/.test(receipt.moduleHashes[name]), "Malformed module hash");
+    }
+    const events = receipt.events.map((entry, index) => {
+      exactKeys(entry, ["sequence", "event", "data", "provenance", "previousHash", "hash"], "event " + (index + 1));
+      ensure(typeof entry.previousHash === "string" && /^[a-f0-9]{64}$/.test(entry.previousHash), "Invalid previous event hash");
+      ensure(typeof entry.hash === "string" && /^[a-f0-9]{64}$/.test(entry.hash), "Invalid event hash");
+      return { sequence: entry.sequence, event: entry.event, data: entry.data, provenance: entry.provenance };
+    });
+    const computed = await createPackageReceipt(
+      receipt.source, { ...receipt.execution, ledger: events },
+      receipt.modules, { createdAt: receipt.createdAt }
+    );
+    const valid = canonical(computed) === canonical(receipt);
+    return valid
+      ? { valid: true, reason: "SHA-256 source, modules, transcript and event chain match",
+          schema: PACKAGE_RECEIPT_SCHEMA, modules: names.length,
+          moduleSetHash: receipt.moduleSetHash, headHash: receipt.headHash,
+          receiptHash: receipt.receiptHash, events: events.length }
+      : { valid: false, reason: "Source, module, event or transcript digest mismatch" };
+  } catch (error) {
+    return { valid: false, reason: error instanceof Error ? error.message : "Invalid v2 receipt" };
+  }
+}
+
+/** Recognizes v1 standalone and v2 package receipts. Never runs PhiThon code. */
+export async function verifyReceipt(receipt) {
+  if (receipt?.schema === PACKAGE_RECEIPT_SCHEMA) return verifyPackageReceipt(receipt);
+  return verifyLegacyReceipt(receipt);
 }
