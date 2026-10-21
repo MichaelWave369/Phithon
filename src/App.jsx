@@ -307,12 +307,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R6 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R7 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE SIX</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE SEVEN</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -326,7 +326,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.7 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.8 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -356,7 +356,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R6</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R7</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -447,7 +447,7 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="playground-warning">R6 PhiBrain builds optional NOT_SENT request handoffs only after an explicit per-run grant. No request is dispatched to a model, browser network or SPV. SHA-256 receipt events remain SIMULATED. Execute only trusted code.</p>
+          <p className="playground-warning">R7 browser execution remains offline and exports NOT_SENT requests only. A separate, explicitly confirmed Node CLI command can send a single local-routed prompt to Ollama at 127.0.0.1:11434. SPV dispatch is not implemented. SHA-256 receipts do not prove model execution.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
@@ -462,7 +462,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.7.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.8.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>

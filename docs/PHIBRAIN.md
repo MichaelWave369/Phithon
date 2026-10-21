@@ -57,3 +57,7 @@ Each staged request is also stored in PhiThon's in-memory `ledger` with event na
 **Security:** opt-in staging is not a hardened sandbox or an isolation guarantee. The Node child process is an availability boundary, not a separate OS identity. Future real model adapters must have scoped endpoint allowlists, transport authentication, independent budget/timeout controls, user-confirmed dispatch, and verified response provenance. None of those dispatch capabilities ship in R6.
 
 Ledger above ego: permission, intention, delivery, and verification must not be conflated.
+
+## R7 follow-on: local Ollama consumer
+
+The R6 browser and `--brain-out` pathways remain **offline request staging**. R7 adds a **separate** Node CLI `dispatch-local` consumer requiring a fresh `--confirm-local` flag, explicit model, request ID and journal output filename before contacting only `127.0.0.1:11434`. This does not enable browser dispatch or SPV. See [R7 local Ollama adapter](PHIBRAIN-OLLAMA.md).
