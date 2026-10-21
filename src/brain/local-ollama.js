@@ -25,7 +25,7 @@ export function validateLocalModel(model) {
  * Send one single-turn generation. Caller is responsible for consent.
  * Never follow redirects; never resolve remote hosts; do not auto-pull models.
  */
-export async function postLocalOllama({ model, prompt, signal, timeoutMs = LOCAL_TIMEOUT_MS }) {
+export async function postLocalOllama({ model, prompt, signal, timeoutMs = LOCAL_TIMEOUT_MS, requestFactory = request }) {
   validateLocalModel(model);
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 2048) {
     throw new TypeError("PhiBrain: prompt must be 1..2048 nonblank characters");
@@ -49,7 +49,7 @@ export async function postLocalOllama({ model, prompt, signal, timeoutMs = LOCAL
       signal?.removeEventListener("abort", cancel);
       if (error) reject(error); else resolve(value);
     }
-    const req = request({
+    const req = requestFactory({
       hostname: "127.0.0.1",
       port: 11434,
       path: "/api/generate",
