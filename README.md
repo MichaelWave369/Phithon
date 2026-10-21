@@ -2,7 +2,19 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R2 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R3 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R3: PhiShield CLI process boundaries
+
+Running `.phi` files from the Node CLI now uses a **short-lived child process** with a 2.5-second wall-clock deadline, output bounds, a small V8 old-space budget and a minimal inherited environment. This protects the CLI's main process from many accidental hangs. **It is not a hardened security sandbox.**
+
+Check a PhiThon file's syntax *without executing it*:
+
+```sh
+npm run phi -- check examples/modules.phi
+```
+
+Execution, `--receipt`, and the one-line REPL also use the bounded child process. Verifying a receipt still hashes JSON only and does not execute the source inside it. See the [PhiShield policy](docs/PHISHIELD.md).
 
 ## R2: Portable PhiLedger integrity receipts
 
@@ -19,7 +31,7 @@ npm run phi -- verify examples/modules.phi.receipt.json
 
 ## R1: Optional modules and a cancellable playground
 
-The browser playground now runs PhiThon programs inside a dedicated **Web Worker**, with a cancel button and a hard wall-clock deadline. A Worker prevents the interpreter from freezing the editor and can be terminated. It is **not** a hardened security sandbox. The Node CLI still runs synchronously and needs process isolation before running untrusted programs.
+The browser playground now runs PhiThon programs inside a dedicated **Web Worker**, with a cancel button and a hard wall-clock deadline. A Worker prevents the interpreter from freezing the editor and can be terminated. It is **not** a hardened security sandbox. The Node CLI now uses a separate, deadline-limited child, but still needs true OS-level sandboxing before running untrusted programs.
 
 Import functionality explicitly with `use math` or `use nbg`. Modules are scoped, opt-in, and provide no shell, network or filesystem access. For example:
 
@@ -73,7 +85,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0, R1 and R2
+## Shipped in R0, R1, R2 and R3
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -83,6 +95,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R1 opt-in numeric and toy graph modules (`use math`, `use nbg`)
 - R1 browser Worker with deadline and cancellation
 - R2 SHA-256 chained JSON receipts with import/export validation
+- R3 fixed-command child runner with deadline, bounded pipes, and nonexecuting syntax checking
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -102,11 +115,11 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R3: stronger syntax, package tools, richer library and isolated CLI processes.
+R4: stronger syntax, package tools, richer library and stronger process isolation.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
-The core language will never silently grant file, shell, or network access.
+The core language will never silently grant file, shell, or network access. The CLI child process still inherits the host's OS identity and is **not** safe for hostile programs.
 
 ## License
 

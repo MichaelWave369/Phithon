@@ -62,13 +62,13 @@ npm run phi -- examples/hello.phi
 npm run phi
 ```
 
-The R1 CLI REPL reads a single line per program and does **not** preserve variable state across lines.
+The R3 CLI REPL reads a single line per program and does **not** preserve variable state across lines.
 
 ## Planned, NOT implemented
 
 - Indentation-based Python-like syntax, rich modules and package manager
 - Type checking and tooling
-- Isolated operating-system subprocess execution for the CLI
+- OS-level privilege confinement for CLI subprocesses
 - Capability-granted external adapters
 - Versioned, signed Ledger integration, SPV AI adapters and research-grade NBG implementation
 - Compatibility tooling for Python
@@ -120,5 +120,9 @@ Allowed n = 3..64. **These are intentionally limited elementary graph examples. 
 
 ### R1 browser execution
 
-The playground runs each program inside a disposable browser Web Worker, with a 2.5 second wall-clock deadline and an interactive Stop button. The synchronous interpreter and Node CLI still enforce step and recursion limits, but the Node CLI has no wall-clock kill mechanism. Neither the Worker nor the language is a security sandbox for untrusted adversarial code. Ledger events remain **SIMULATED**, ephemeral and unsigned.
+The playground runs each program inside a disposable browser Web Worker, with a 2.5 second wall-clock deadline and an interactive Stop button. The synchronous interpreter still enforces step and recursion limits. R3 adds a parent-enforced CLI child-process wall-clock deadline. Neither the Worker nor the language is a security sandbox for untrusted adversarial code. Ledger events remain **SIMULATED**, ephemeral and unsigned.
 
+
+## R3 CLI and PhiShield
+
+The CLI executes programs in a separate Node child with a fixed 2.5-second parent-enforced deadline. Use `npm run phi -- check path/to/program.phi` to tokenize and parse without executing statements. `verify` on receipt JSON remains hash-only and never runs imported source. This improves accidental-failure containment but **does not create an OS security sandbox or separate user privileges**. See [PhiShield](PHISHIELD.md).
