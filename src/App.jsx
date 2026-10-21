@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { runInWorker } from "./language/runner.js";
+import { createReceipt, verifyReceipt } from "./ledger/receipts.js";
 
 const EXAMPLES = [
   { title: "Welcome, Field", label: "Hello World", code: [
@@ -86,6 +87,10 @@ export default function App() {
   const [result, setResult] = useState(null);
   const controllerRef = useRef(null);
   const requestRef = useRef(0);
+  const [receipt, setReceipt] = useState(null);
+  const [integrity, setIntegrity] = useState(null);
+  const [importIntegrity, setImportIntegrity] = useState(null);
+  const [receiptNotice, setReceiptNotice] = useState("");
   useEffect(() => () => controllerRef.current?.abort(), []);
 
   function loadExample(i) {
@@ -97,22 +102,29 @@ export default function App() {
     setOutput(["Example loaded. Ready to run."]);
     setReceipts([]);
     setStatus("ready");
+    setReceipt(null);
+    setIntegrity(null);
+    setImportIntegrity(null);
+    setReceiptNotice("");
     setSteps(null);
     setResult(null);
   }
   async function runProgram() {
-    // Each Run gets its own killable worker; older responses cannot repaint the editor.
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
     const request = ++requestRef.current;
+    const source = code;
     setStatus("running");
     setOutput(["Running in dedicated worker..."]);
     setReceipts([]);
     setSteps(null);
     setResult(null);
+    setReceipt(null);
+    setIntegrity(null);
+    setReceiptNotice("");
     try {
-      const data = await runInWorker(code, {
+      const data = await runInWorker(source, {
         signal: controller.signal,
         timeoutMs: 2500,
         maxSteps: 30000,
@@ -124,13 +136,27 @@ export default function App() {
       setSteps(data.steps);
       setResult(data.result);
       setStatus("ok");
+      // Receipt integrity is separate from the executed program's in-memory ledger.
+      // Seal the immutable snapshot only after successful execution.
+      try {
+        const sealed = await createReceipt(source, data);
+        if (request !== requestRef.current) return;
+        const check = await verifyReceipt(sealed);
+        if (request !== requestRef.current) return;
+        setReceipt(sealed);
+        setIntegrity(check);
+      } catch (error) {
+        if (request !== requestRef.current) return;
+        setReceiptNotice("Receipt hashing unavailable: " + (error instanceof Error ? error.message : String(error)));
+      }
     } catch (err) {
-      if (request !== requestRef.current) return;
-      if (controller.signal.aborted) return;
+      if (request !== requestRef.current || controller.signal.aborted) return;
       setOutput([err instanceof Error ? err.message : String(err)]);
       setReceipts([]);
       setSteps(null);
       setResult(null);
+      setReceipt(null);
+      setIntegrity(null);
       setStatus("error");
     } finally {
       if (request === requestRef.current) controllerRef.current = null;
@@ -146,6 +172,40 @@ export default function App() {
     setReceipts([]);
     setSteps(null);
     setResult(null);
+    setReceipt(null);
+    setIntegrity(null);
+    setReceiptNotice("");
+  }
+  function downloadText(name, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function exportReceipt() {
+    if (!receipt) return;
+    downloadText("phithon.execution.receipt.json", JSON.stringify(receipt, null, 2) + "\n", "application/json");
+  }
+  async function importReceipt(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setImportIntegrity(null);
+    if (file.size > 1000000) {
+      setImportIntegrity({ valid: false, reason: "Receipt file exceeds 1 MB" });
+      return;
+    }
+    try {
+      const imported = JSON.parse(await file.text());
+      setImportIntegrity(await verifyReceipt(imported));
+    } catch (error) {
+      setImportIntegrity({ valid: false, reason: error instanceof Error ? error.message : "Unreadable receipt" });
+    }
   }
   function onEditorKey(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runProgram(); }
@@ -156,14 +216,7 @@ export default function App() {
       requestAnimationFrame(() => { e.target.selectionStart = a + 2; e.target.selectionEnd = a + 2; });
     }
   }
-  function savePhiFile() {
-    const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url; link.download = "program.phi";
-    document.body.appendChild(link); link.click(); link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+  function savePhiFile() { downloadText("program.phi", code, "text/plain;charset=utf-8"); }
 
   return (
     <div className="app-shell">
@@ -177,12 +230,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R1 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R2 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE ONE</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE TWO</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -196,7 +249,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.2 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.3 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -204,7 +257,7 @@ export default function App() {
           <div><strong>01 /</strong> ORIGINAL TOKENIZER</div>
           <div><strong>02 /</strong> PRATT PARSER</div>
           <div><strong>03 /</strong> LIVE INTERPRETER</div>
-          <div><strong>04 /</strong> KILLABLE WORKER</div>
+          <div><strong>04 /</strong> HASH-CHAIN LEDGER</div>
         </section>
         <section className="workspace-section" id="playground">
           <div className="section-heading">
@@ -226,7 +279,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R1</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R2</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -262,15 +315,33 @@ export default function App() {
                   </div>
                 ))}
               </div>
+              <div className="integrity-panel">
+                <div className="receipt-heading"><span>◇ PHILEDGER / SHA-256</span><span>{receipt ? "SEALED" : "NOT SEALED"}</span></div>
+                {receipt && (
+                  <>
+                    <p className="integrity-intro">Receipt digest</p>
+                    <code className="digest-value">{receipt.receiptHash}</code>
+                    <p className="integrity-summary">{integrity?.valid ? "INTERNAL HASH CHAIN VALID" : integrity ? "HASH CHAIN MISMATCH" : "CHECKING HASHES"} · {receipt.events.length} event(s)</p>
+                  </>
+                )}
+                {!receipt && <p className="integrity-intro">Run a program to build a portable integrity receipt.</p>}
+                <div className="integrity-actions">
+                  <button type="button" className="plain-button" onClick={exportReceipt} disabled={!receipt}>↓ Export receipt</button>
+                  <label className="plain-button upload-label">↑ Verify JSON<input type="file" accept=".json,application/json" onChange={importReceipt} aria-label="Import receipt JSON to verify SHA-256 integrity" /></label>
+                </div>
+                {importIntegrity && <p className={importIntegrity.valid ? "integrity-ok" : "integrity-bad"} role="status">{importIntegrity.valid ? "IMPORTED RECEIPT: INTEGRITY VALID" : "IMPORTED RECEIPT: INVALID"} · {importIntegrity.reason}</p>}
+                {receiptNotice && <p className="integrity-bad" role="status">{receiptNotice}</p>}
+                <p className="integrity-caution">An internally valid hash is not a signature, trusted timestamp or proof of execution. Anyone can generate a new self-consistent receipt.</p>
+              </div>
             </div>
           </div>
-          <p className="playground-warning">R1 runs programs in a cancellable Web Worker with a 2.5-second deadline. This prevents most UI lockups but is NOT a hardened security sandbox. Execute only trusted code. Ledger receipts remain simulated, in-memory and unsigned.</p>
+          <p className="playground-warning">R2 runs programs in a cancellable Web Worker and SHA-256-hashes successful execution transcripts and in-memory events. Integrity checks do NOT authenticate the author, timestamp, or prove the program executed. Execute only trusted code.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
             <p className="eyebrow">FIELD NOTES / QUICK REFERENCE</p>
             <h2>A language with<br /><em>room to grow.</em></h2>
-            <p>Make variables, functions and arrays, and load opt-in math or toy graph helpers with use math and use nbg. Real research and AI adapters come later.</p>
+            <p>Write .phi programs, load opt-in math and graph helpers, and export a portable hash-chain receipt. These checks detect internal modifications but do not prove authorship or execution.</p>
             <a href="https://github.com/MichaelWave369/Phithon/blob/main/docs/LANGUAGE.md" target="_blank" rel="noreferrer" className="reference-link">Read the language specification ↗</a>
           </div>
           <div className="reference-table">
@@ -279,7 +350,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.2.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.3.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>

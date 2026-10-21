@@ -32,3 +32,19 @@ h1,h2{font-family:"Space Grotesk",sans-serif;margin:0;letter-spacing:-3px}h1{fon
 .state-chip.cancelled{color:#e5b59f;border-color:#6f554e}
 .run-info strong{max-width:100%}
 @media(max-width:720px){.editor-footer{flex-wrap:wrap;height:auto;min-height:70px;padding:10px;gap:8px}.cancel-button{padding:11px 8px}}
+
+
+/* R2: portable PhiLedger receipt inspection */
+.integrity-panel{padding:20px 21px;border-top:1px solid #283a45;background:#0d1a23}
+.integrity-intro{font:11px/1.6 "DM Mono",monospace;color:#94b5a8;margin:13px 0 5px}
+.digest-value{display:block;overflow-wrap:anywhere;font:10px/1.7 "DM Mono",monospace;color:#b8efcc;background:#101e2a;padding:10px;border:1px solid #294638;border-radius:4px;margin:8px 0 12px}
+.integrity-summary{color:#a9dfbb;font:10px/1.6 "DM Mono",monospace}
+.integrity-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.integrity-actions .plain-button{display:inline-flex;align-items:center;justify-content:center;padding:10px 12px}
+.integrity-actions button:disabled{opacity:.45;cursor:not-allowed}
+.upload-label{position:relative;cursor:pointer}
+.upload-label input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.upload-label:focus-within{outline:2px solid #a9eec4;outline-offset:2px}
+.integrity-ok,.integrity-bad{font:11px/1.7 "DM Mono",monospace;overflow-wrap:anywhere;margin:13px 0 0}
+.integrity-ok{color:#91dfac}.integrity-bad{color:#ff9b9b}
+.integrity-caution{font-size:10px;line-height:1.7;color:#8295a5;margin:12px 0 0}
