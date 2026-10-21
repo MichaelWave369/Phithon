@@ -196,7 +196,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.1 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.2 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -226,7 +226,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R0</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R1</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
