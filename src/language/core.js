@@ -11,7 +11,7 @@ function buildPhiThon() {
       this.line = token.line; this.column = token.col;
     }
   }
-  const keys = new Set(["use", "let", "fn", "return", "if", "else", "while", "true", "false", "null"]);
+  const keys = new Set(["import", "export", "use", "let", "fn", "return", "if", "else", "while", "true", "false", "null"]);
   const pairs = new Set(["==", "!=", "<=", ">=", "&&", "||"]);
   const singles = new Set("+-*/%!=<>(){}[],;");
   const precedence = { "||": 1, "&&": 2, "==": 3, "!=": 3, "<": 4, "<=": 4, ">": 4, ">=": 4, "+": 5, "-": 5, "*": 6, "/": 6, "%": 6 };
@@ -81,6 +81,15 @@ function buildPhiThon() {
     stmt() {
       const at = this.t();
       if (this.take(";")) return { tag: "empty", at };
+      if (this.take("import")) {
+        const name = this.ident(); this.take(";");
+        return { tag: "import", name, at };
+      }
+      if (this.take("export")) {
+        const declaration = this.stmt();
+        if (!["let", "fn"].includes(declaration.tag)) throw new PhiError("export requires let or fn", at);
+        return { tag: "export", declaration, at };
+      }
       if (this.take("use")) {
         const name = this.ident(); this.take(";");
         return { tag: "use", name, at };
@@ -185,6 +194,46 @@ function buildPhiThon() {
     const limit = (n, d, max) => Number.isInteger(n) && n > 0 ? Math.min(n, max) : d;
     const stepLimit = limit(opts.maxSteps, 30000, 500000), outLimit = limit(opts.maxOutputChars, 12000, 50000);
     const output = [], ledger = [], root = new Scope();
+    const moduleSources = opts.modules ?? {};
+    if (!moduleSources || typeof moduleSources !== "object" || Array.isArray(moduleSources)) {
+      throw new PhiError("Module registry must be a named source map");
+    }
+    const moduleNames = Object.keys(moduleSources);
+    if (moduleNames.length > 32) throw new PhiError("Module registry exceeds 32 modules");
+    let moduleBytes = 0;
+    for (const name of moduleNames) {
+      if (!/^[A-Za-z][A-Za-z0-9_]{0,39}$/.test(name)) throw new PhiError("Invalid module name: " + name);
+      const source = moduleSources[name];
+      if (typeof source !== "string" || source.length > 40_000) throw new PhiError("Module source too large: " + name);
+      moduleBytes += source.length;
+    }
+    if (moduleBytes > 200_000) throw new PhiError("Module registry exceeds 200,000 characters");
+    const moduleCache = new Map(), loading = new Set();
+    function importModule(name, env, at) {
+      if (!Object.hasOwn(moduleSources, name)) throw new PhiError("Unknown local module: " + name, at);
+      if (loading.has(name)) throw new PhiError("Circular module dependency: " + [...loading, name].join(" -> "), at);
+      if (!moduleCache.has(name)) {
+        if (loading.size >= 16) throw new PhiError("Module import depth exceeded", at);
+        loading.add(name);
+        try {
+          const scope = new Scope(root), exported = new Map();
+          const ast = parse(moduleSources[name]);
+          for (const declaration of ast) {
+            tick(declaration.at);
+            if (!["let", "fn", "export", "import", "use", "empty"].includes(declaration.tag)) {
+              throw new PhiError("Module top level permits declarations and imports only", declaration.at);
+            }
+            runStatement(declaration, scope, exported);
+          }
+          moduleCache.set(name, exported);
+        } finally {
+          loading.delete(name);
+        }
+      }
+      for (const [symbol, value] of moduleCache.get(name)) {
+        env.define(name + "_" + symbol, value, at);
+      }
+    }
     let steps = 0, size = 0, callDepth = 0;
     function tick(at) { if (++steps > stepLimit) throw new PhiError(`Step limit (${stepLimit}) exceeded`, at); }
     function num(v, at) { if (typeof v !== "number") throw new PhiError("Expected number", at); return v; }
@@ -289,10 +338,18 @@ function buildPhiThon() {
       for (const n of b.body) last = runStatement(n, scope);
       return last;
     }
-    function runStatement(n, env) {
+    function runStatement(n, env, exportSink = null) {
       tick(n.at);
       switch (n.tag) {
         case "empty": return null;
+        case "import": importModule(n.name, env, n.at); return null;
+        case "export": {
+          if (!exportSink) throw new PhiError("export is only valid in module files", n.at);
+          runStatement(n.declaration, env);
+          if (exportSink.has(n.declaration.name)) throw new PhiError("Duplicate export: " + n.declaration.name, n.at);
+          exportSink.set(n.declaration.name, env.get(n.declaration.name, n.at));
+          return null;
+        }
         case "use": installModule(n.name, env, { PhiError, num, valid }, n.at); return null;
         case "let": env.define(n.name, evalExpr(n.value, env), n.at); return null;
         case "assign": return env.set(n.name, evalExpr(n.value, env), n.at);
