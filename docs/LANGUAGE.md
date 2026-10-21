@@ -142,3 +142,7 @@ R4 originally blocked incomplete package receipts. R5 now enables versioned v2 s
 ## R6: Permission-gated PhiBrain
 
 `use brain` exposes `brain_request(route, prompt)`, which only stages inert request data and records a SIMULATED ledger event. Host permission `brainGrant: true` is required separately on **each execution**. Routes are the strings `manual`, `local`, or `spv` (intent labels, not network destinations). Five requests and 2,048 characters per prompt are the R6 maxima. The CLI flag `--brain-out <file.json> <file.phi>` explicitly grants staging and saves a NOT_SENT file; the browser uses a per-run consent checkbox and manual JSON export. **Neither connects to AI models or SPV.** See [PhiBrain](PHIBRAIN.md).
+
+## R7: Optional local Ollama dispatch
+
+PhiThon language programs still cannot call models themselves. On Node CLI only, a separately authorized `dispatch-local` command can consume a previously staged `NOT_SENT` handoff of route `local` and send exactly one selected prompt to the fixed loopback Ollama endpoint. It requires the exact `--confirm-local` flag and creates an exclusive response journal before dispatch. The returned model text is unverified data, not executable code or proof of identity. Neither the browser nor `spv`-routed requests can use this dispatch adapter. See [PhiBrain Ollama bridge](PHIBRAIN-OLLAMA.md).
