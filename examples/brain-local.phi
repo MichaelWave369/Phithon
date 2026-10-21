@@ -1,0 +1,10 @@
+# PhiBrain R7: stage a request intended for a local Ollama model.
+# 1. npm run phi -- --brain-out handoff.json examples/brain-local.phi
+# 2. Review handoff.json.
+# 3. With Ollama running locally, explicitly approve ONE request:
+#    npm run phi -- dispatch-local handoff.json --model gemma3:12b --request 1 --out reply.json --confirm-local
+#    Nothing is dispatched by steps 1 or 2 alone.
+use brain
+let task = brain_request("local", "Give me three small PhiThon test ideas.")
+print("PhiBrain local request staged:", task)
+print("This program cannot contact Ollama by itself.")
