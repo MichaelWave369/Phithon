@@ -2,7 +2,20 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R7 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R8 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R8: ΦBridge / real SPV offline Evidence Bench compatibility
+
+PhiThon now understands an **actual documented SuperPhiVessel export**: the redacted `superphivessel.local-console.evidence-bench.bundle.v0.1` from SPV's Portable Windows Local Console. A strict, portable validator checks exact privacy/governance fields, model/output-hash review matching, and source evidence limits **without ever running or routing a model**.
+
+```sh
+npm run phi -- spv-bench-inspect examples/spv-evidence-bench.SYNTHETIC.json
+npm run phi -- spv-bench-inspect path/to/vessie-local-evidence-bench-portable.json
+```
+
+An explicit `--models` flag reveals imported model labels in the local CLI; otherwise they're redacted. The browser has a user-selected **ΦBRIDGE / SPV EVIDENCE** file importer that reports bounded, unauthenticated statistics entirely in memory. The importer grants **no** PhiBrain permissions and provides **no** live SPV API or networking.
+
+See the [SPV Evidence Bridge guide](docs/SPV-BRIDGE.md) for the exact upstream schema, privacy considerations and governance limitations.
 
 ## R7: Explicit local Ollama dispatch
 
@@ -136,7 +149,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0, R1, R2, R3, R4, R5 and R6
+## Shipped in R0, R1, R2, R3, R4, R5, R6, R7 and R8
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -151,6 +164,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R5 module-complete SHA-256 receipts, legacy verification and current-project comparison
 - R6 explicit per-run PhiBrain permission and manual NOT_SENT request export (no AI dispatch)
 - R7 CLI-only explicitly confirmed local Ollama dispatch (one selected request; no SPV integration)
+- R8 strict, read-only SPV portable Evidence Bench v0.1 import with provenance-safe summaries
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -170,7 +184,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R8: separately reviewed SPV protocol adapter, richer syntax, and stronger OS-level confinement.
+R9: separately reviewed SPV live API when one exists, signed provenance verification, richer syntax, stronger OS-level confinement.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
