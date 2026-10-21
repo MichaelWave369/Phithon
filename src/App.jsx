@@ -63,7 +63,27 @@ const EXAMPLES = [
     'print("Edges =", nbg_cycle(6))',
     'print("Neighbors of 0 =", nbg_neighbors(6, 0))',
     'ledger("TOY_GRAPH", "illustrative")'
-  ].join("\n") }
+  ].join("\n") },
+  { title: "Library Workshop", label: "R4 · PhiPack", code: [
+    "# Two reusable local modules",
+    "import geometry",
+    "import numbers",
+    'print("3x9 =", numbers_triple(9))',
+    'print("Distance =", geometry_hypotenuse(3,4))',
+    'print("Double triple =", geometry_doubled_triple(4))'
+  ].join("\n"), modules: {
+    numbers: [
+      "use math",
+      "export let multiplier = 3",
+      "export fn triple(x) { return x * multiplier }"
+    ].join("\n"),
+    geometry: [
+      "import numbers",
+      "use math",
+      "export fn hypotenuse(a,b) { return math_distance(0,0,a,b) }",
+      "export fn doubled_triple(x) { return numbers_triple(x) * 2 }"
+    ].join("\n")
+  } }
 ];
 
 const BUILTINS = [
@@ -74,12 +94,15 @@ const BUILTINS = [
   ["range(n)", "Build number array"],
   ["ledger(event, value)", "Simulated memory receipt"],
   ["use math", "Optional numeric standard library"],
-  ["use nbg", "Optional toy cycle graph functions"]
+  ["use nbg", "Optional toy cycle graph functions"],
+  ["import name", "Import exports from a local .phi module"]
 ];
 
 export default function App() {
   const [active, setActive] = useState(0);
   const [code, setCode] = useState(EXAMPLES[0].code);
+  const [modules, setModules] = useState(EXAMPLES[0].modules ?? {});
+  const [selectedModule, setSelectedModule] = useState("");
   const [output, setOutput] = useState(["Welcome to PhiThon R1.", "Press Run program to execute your .phi code."]);
   const [receipts, setReceipts] = useState([]);
   const [status, setStatus] = useState("ready");
@@ -99,6 +122,8 @@ export default function App() {
     requestRef.current++;
     setActive(i);
     setCode(EXAMPLES[i].code);
+    setModules(EXAMPLES[i].modules ?? {});
+    setSelectedModule(Object.keys(EXAMPLES[i].modules ?? {})[0] ?? "");
     setOutput(["Example loaded. Ready to run."]);
     setReceipts([]);
     setStatus("ready");
@@ -115,6 +140,7 @@ export default function App() {
     controllerRef.current = controller;
     const request = ++requestRef.current;
     const source = code;
+    const library = { ...modules };
     setStatus("running");
     setOutput(["Running in dedicated worker..."]);
     setReceipts([]);
@@ -128,7 +154,8 @@ export default function App() {
         signal: controller.signal,
         timeoutMs: 2500,
         maxSteps: 30000,
-        maxOutputChars: 12000
+        maxOutputChars: 12000,
+        modules: library
       });
       if (request !== requestRef.current) return;
       setOutput(data.output.length ? data.output : ["Program finished without printed output."]);
@@ -137,7 +164,11 @@ export default function App() {
       setResult(data.result);
       setStatus("ok");
       // Receipt integrity is separate from the executed program's in-memory ledger.
-      // Seal the immutable snapshot only after successful execution.
+      // R2 receipts do NOT bind module bytes: refuse misleading partial receipts.
+      if (Object.keys(library).length) {
+        setReceiptNotice("PhiPack modules are not included in R2 receipt hashes. Receipt export is disabled for module runs until the schema binds module sources.");
+        return;
+      }
       try {
         const sealed = await createReceipt(source, data);
         if (request !== requestRef.current) return;
@@ -217,6 +248,28 @@ export default function App() {
     }
   }
   function savePhiFile() { downloadText("program.phi", code, "text/plain;charset=utf-8"); }
+  function addModule() {
+    let i = 1;
+    while (Object.hasOwn(modules, "library" + i)) i++;
+    if (i > 32) return;
+    const name = "library" + i;
+    setModules(prev => ({ ...prev, [name]: "export fn double(x) { return x * 2 }" }));
+    setSelectedModule(name);
+  }
+  function saveModule() {
+    if (!Object.hasOwn(modules, selectedModule)) return;
+    downloadText(selectedModule + ".phi", modules[selectedModule], "text/plain;charset=utf-8");
+  }
+  function saveManifest() {
+    const names = Object.keys(modules);
+    const data = {
+      schema: "phithon.package.v1",
+      name: "phithon-playground",
+      version: "0.1.0",
+      modules: Object.fromEntries(names.map(name => [name, name + ".phi"]))
+    };
+    downloadText("phithon.pack.json", JSON.stringify(data, null, 2) + "\n", "application/json");
+  }
 
   return (
     <div className="app-shell">
@@ -230,12 +283,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R2 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R4 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE TWO</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE FOUR</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -249,7 +302,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.3 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.5 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -257,7 +310,7 @@ export default function App() {
           <div><strong>01 /</strong> ORIGINAL TOKENIZER</div>
           <div><strong>02 /</strong> PRATT PARSER</div>
           <div><strong>03 /</strong> LIVE INTERPRETER</div>
-          <div><strong>04 /</strong> HASH-CHAIN LEDGER</div>
+          <div><strong>04 /</strong> LOCAL MODULES</div>
         </section>
         <section className="workspace-section" id="playground">
           <div className="section-heading">
@@ -279,7 +332,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R2</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R4</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -288,6 +341,26 @@ export default function App() {
                 {status === "running" && <button type="button" className="cancel-button" onClick={cancelProgram}>■ Stop</button>}
                 <button type="button" className="plain-button" onClick={savePhiFile}>↓ Save .phi</button>
                 <span className="size-readout">{code.split("\n").length} LINES</span>
+              </div>
+              <div className="library-workbench">
+                <div className="library-heading"><strong>ΦPACK / LOCAL MODULES</strong><button type="button" className="module-add" onClick={addModule} disabled={Object.keys(modules).length >= 32}>+ Module</button></div>
+                {Object.keys(modules).length === 0
+                  ? <p className="library-hint">No local libraries loaded. Choose Library Workshop or add one.</p>
+                  : <>
+                    <div className="module-tabs">{Object.keys(modules).map(name => (
+                      <button type="button" className={selectedModule === name ? "module-tab selected" : "module-tab"} key={name} onClick={() => setSelectedModule(name)}>{name}.phi</button>
+                    ))}</div>
+                    {Object.hasOwn(modules, selectedModule) && <>
+                      <label className="sr-only" htmlFor="module-source">Source code for {selectedModule}.phi</label>
+                      <textarea id="module-source" className="module-editor" spellCheck={false} value={modules[selectedModule]} onChange={event => setModules(prev => ({ ...prev, [selectedModule]: event.target.value }))} />
+                    </>}
+                    <div className="module-actions">
+                      <button type="button" className="plain-button" onClick={saveModule}>↓ Save selected .phi</button>
+                      <button type="button" className="plain-button" onClick={saveManifest}>↓ Save manifest</button>
+                    </div>
+                    <p className="library-hint">Download the main program, each module and manifest into one directory. Imports use exported names such as numbers_triple().</p>
+                  </>
+                }
               </div>
             </div>
             <div className="terminal-column">
@@ -335,13 +408,13 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="playground-warning">R2 runs programs in a cancellable Web Worker and SHA-256-hashes successful execution transcripts and in-memory events. Integrity checks do NOT authenticate the author, timestamp, or prove the program executed. Execute only trusted code.</p>
+          <p className="playground-warning">R4 adds local module imports and exports, while keeping isolated worker execution. R2 receipt export is disabled for programs using local modules because the old hash format does not bind module code. Execute only trusted code.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
             <p className="eyebrow">FIELD NOTES / QUICK REFERENCE</p>
             <h2>A language with<br /><em>room to grow.</em></h2>
-            <p>Write .phi programs, load opt-in math and graph helpers, and export a portable hash-chain receipt. These checks detect internal modifications but do not prove authorship or execution.</p>
+            <p>Define functions in local .phi libraries and use import moduleName to access exported symbols. Save each library and its manifest for CLI use. Receipts cannot yet authenticate library contents.</p>
             <a href="https://github.com/MichaelWave369/Phithon/blob/main/docs/LANGUAGE.md" target="_blank" rel="noreferrer" className="reference-link">Read the language specification ↗</a>
           </div>
           <div className="reference-table">
@@ -350,7 +423,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.3.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.5.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>
