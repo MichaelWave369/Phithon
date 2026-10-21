@@ -95,11 +95,14 @@ function checkReportLink(report, link, kind) {
     "inconsistent " + kind + " case counts");
   requireOk(report.cases.every((row,i) =>
     obj(row) && (isBehavior ?
+      ["MATCH","MISMATCH","ERROR"].includes(row.status) :
+      ["MATCH","MISMATCH","ERROR","INCONCLUSIVE"].includes(row.status)) &&
+    (isBehavior ?
       typeof row.id === "string" && /^[a-z][a-z0-9_-]{0,39}$/.test(row.id) :
       row.index === i + 1) &&
     validDigest(row.inputSha256) &&
     validDigest(isBehavior ? row.harnessSourceSha256 : row.harnessSha256) &&
-    (row.observedOutputSha256 === null || row.observedSha256 === null ||
+    ((isBehavior ? row.observedOutputSha256 : row.observedSha256) === null ||
       validDigest(isBehavior ? row.observedOutputSha256 : row.observedSha256)) &&
     (row.status !== "MATCH" ||
       validDigest(isBehavior ? row.observedOutputSha256 : row.observedSha256))),
