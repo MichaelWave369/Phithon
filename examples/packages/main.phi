@@ -1,0 +1,11 @@
+# Run: npm run phi -- examples/packages/main.phi
+# Check: npm run phi -- check examples/packages/main.phi
+import geometry
+import numbers
+
+print("3 x 3 =", numbers_triple(3))
+print("2 x (3 x 3) =", geometry_doubled_triple(3))
+print("Mean of 10 and 20 =", numbers_average(10, 20))
+print("3-4-5 hypotenuse =", geometry_hypotenuse(3, 4))
+
+ledger("PHIPACK_DEMO", "local reusable modules")

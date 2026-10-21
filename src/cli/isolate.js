@@ -7,12 +7,13 @@
  */
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { validateModuleRegistry } from "../language/package.js";
 
 const CHILD = fileURLToPath(new URL("./isolated-child.js", import.meta.url));
 const MAX_STDOUT_BYTES = 1_000_000;
 const MAX_STDERR_BYTES = 32_768;
 
-export async function runIsolated(source, { mode = "execute", timeoutMs = 2500, signal } = {}) {
+export async function runIsolated(source, { mode = "execute", timeoutMs = 2500, signal, modules = {} } = {}) {
   if (typeof source !== "string" || source.length > 100_000 || Buffer.byteLength(source, "utf8") > 400_000) {
     throw new TypeError("PhiShield: source is too large or invalid");
   }
@@ -21,6 +22,9 @@ export async function runIsolated(source, { mode = "execute", timeoutMs = 2500, 
     throw new TypeError("PhiShield: timeoutMs must be an integer 1..10000");
   }
   if (signal?.aborted) throw new Error("PhiShield: execution cancelled");
+  validateModuleRegistry(modules);
+  const request = JSON.stringify({ mode, source, modules, options: { maxSteps: 30_000, maxOutputChars: 12_000 } });
+  if (Buffer.byteLength(request, "utf8") > 850_000) throw new TypeError("PhiPack: IPC payload too large");
 
   // Absolute Node binary + fixed child path; no shell, no arbitrary command.
   // Retain SystemRoot only when Windows needs it to launch Node.
@@ -110,9 +114,6 @@ export async function runIsolated(source, { mode = "execute", timeoutMs = 2500, 
       abort();
       return;
     }
-    child.stdin.end(JSON.stringify({
-      mode, source,
-      options: { maxSteps: 30_000, maxOutputChars: 12_000 }
-    }));
+    child.stdin.end(request);
   });
 }

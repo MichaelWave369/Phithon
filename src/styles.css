@@ -48,3 +48,20 @@ h1,h2{font-family:"Space Grotesk",sans-serif;margin:0;letter-spacing:-3px}h1{fon
 .integrity-ok,.integrity-bad{font:11px/1.7 "DM Mono",monospace;overflow-wrap:anywhere;margin:13px 0 0}
 .integrity-ok{color:#91dfac}.integrity-bad{color:#ff9b9b}
 .integrity-caution{font-size:10px;line-height:1.7;color:#8295a5;margin:12px 0 0}
+
+
+/* R4: PhiPack local library editor */
+.library-workbench{border-top:1px solid #283a49;background:#111e29;padding:18px 20px}
+.library-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.library-heading strong{font:10px "DM Mono",monospace;letter-spacing:1.2px;color:#a7dfc0}
+.library-hint{font-size:10px;line-height:1.65;color:#8b9fab;margin:10px 0 0}
+.module-add{border:1px solid #325c4c;background:#193428;color:#b1efd0;border-radius:4px;padding:8px 10px;font:10px "DM Mono",monospace}
+.module-add:disabled{opacity:.5;cursor:not-allowed}
+.module-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 8px}
+.module-tab{border:1px solid #334758;background:#152535;color:#98acb9;border-radius:4px;padding:8px 10px;font:10px "DM Mono",monospace}
+.module-tab.selected{background:#183c2f;color:#c2f7d5;border-color:#4e9d78}
+.module-editor{width:100%;min-height:178px;max-height:300px;resize:vertical;box-sizing:border-box;background:#0b1521;color:#c2e7ce;border:1px solid #2d4450;border-radius:5px;outline:0;padding:13px;font:12px/1.7 "DM Mono",monospace;tab-size:2;white-space:pre;overflow:auto}
+.module-editor:focus{border-color:#80cba1}
+.module-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.module-actions .plain-button{padding:9px;font-size:10px}
+@media(max-width:720px){.library-workbench{padding:14px}.module-editor{min-height:165px}}

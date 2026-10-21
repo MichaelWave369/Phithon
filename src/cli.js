@@ -2,14 +2,16 @@
 import { readFile, stat, writeFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import { runIsolated } from "./cli/isolate.js";
+import { loadProjectModules } from "./cli/package-loader.js";
 import { createReceipt, verifyReceipt } from "./ledger/receipts.js";
 
 const HELP = [
-  "PhiThon R3 · The Language of the Field",
+  "PhiThon R4 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
   "  npm run phi -- check examples/hello.phi",
+  "  npm run phi -- examples/packages/main.phi  # finds adjacent phithon.pack.json",
   "  npm run phi -- --receipt examples/modules.phi",
   "  npm run phi -- verify examples/modules.phi.receipt.json",
   "  npm run phi                            # stateless one-line REPL",
@@ -17,7 +19,8 @@ const HELP = [
   "PhiShield R3 runs CLI programs inside a killable child process.",
   "Each run has a 2.5s wall-clock deadline and bounded pipes.",
   "This is NOT a secure OS sandbox for adversarial code.",
-  "check parses .phi source without executing it.",
+  "check parses .phi source and adjacent local package without executing it.",
+  "Only regular .phi files named in phithon.pack.json are loaded; never downloaded.",
   "verify hashes JSON receipts without executing the included source.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
@@ -28,9 +31,12 @@ async function readLimited(path, maxBytes = 400_000) {
   return readFile(path, "utf8");
 }
 
-async function run(source, receiptPath = null) {
+async function run(source, receiptPath = null, modules = {}) {
   try {
-    const execution = await runIsolated(source);
+    if (receiptPath && Object.keys(modules).length) {
+      throw new Error("PhiPack: R2 receipt format does not bind imported module source; use a module-free program for --receipt");
+    }
+    const execution = await runIsolated(source, { modules });
     for (const line of execution.output) console.log(line);
     if (execution.result !== "null" && execution.output.length === 0) console.log(execution.result);
     if (execution.ledger.length) console.log("Ledger entries (SIMULATED):", JSON.stringify(execution.ledger, null, 2));
@@ -51,8 +57,9 @@ async function run(source, receiptPath = null) {
 async function check(path) {
   try {
     const source = await readLimited(path);
-    const result = await runIsolated(source, { mode: "check" });
-    console.log("Syntax OK · " + result.statements + " statements · " + result.tokens + " tokens");
+    const modules = await loadProjectModules(path);
+    const result = await runIsolated(source, { mode: "check", modules });
+    console.log("Syntax OK · " + result.statements + " statements · " + result.tokens + " tokens · " + result.modules + " modules");
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
@@ -82,13 +89,13 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
 } else if (args[0] === "check" && args.length === 2) {
   await check(args[1]);
 } else if (args[0] === "--receipt" && args.length === 2) {
-  try { await run(await readLimited(args[1]), args[1] + ".receipt.json"); }
+  try { await run(await readLimited(args[1]), args[1] + ".receipt.json", await loadProjectModules(args[1])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 1) {
-  try { await run(await readLimited(args[0])); }
+  try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R3, stateless one-line mode. Ctrl+C exits.");
+  console.log("PhiThon R4, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();

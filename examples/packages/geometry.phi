@@ -1,0 +1,11 @@
+# Transitive import: geometry uses the numbers module.
+import numbers
+use math
+
+export fn doubled_triple(x) {
+  return numbers_triple(x) * 2
+}
+
+export fn hypotenuse(a, b) {
+  return math_distance(0, 0, a, b)
+}

@@ -1,0 +1,11 @@
+# Library module. Only exported declarations are accessible by callers.
+use math
+export let multiplier = 3
+
+export fn triple(x) {
+  return x * multiplier
+}
+
+export fn average(a, b) {
+  return math_mean([a, b])
+}
