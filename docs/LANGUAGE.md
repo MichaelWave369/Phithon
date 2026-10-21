@@ -126,3 +126,11 @@ The playground runs each program inside a disposable browser Web Worker, with a 
 ## R3 CLI and PhiShield
 
 The CLI executes programs in a separate Node child with a fixed 2.5-second parent-enforced deadline. Use `npm run phi -- check path/to/program.phi` to tokenize and parse without executing statements. `verify` on receipt JSON remains hash-only and never runs imported source. This improves accidental-failure containment but **does not create an OS security sandbox or separate user privileges**. See [PhiShield](PHISHIELD.md).
+
+## R4: Local packages
+
+Use `import numbers` to load explicitly registered `.phi` module source. A module may declare `export fn double(x) { return x*2 }`, or `export let multiplier=3`. Call the exported names as `numbers_double(4)` or reference `numbers_multiplier`. Exported functions retain access to private module bindings and imported dependencies.
+
+The CLI reads a local `phithon.pack.json` adjacent to the entry program, which maps names to same-directory `.phi` files. In-browser files come from the editable Library Workshop. Imports are lexical, checked for cycles and missing dependencies, and do not make filesystem or network APIs available inside PhiThon.
+
+R4 `--receipt` is deliberately disabled for programs accompanied by package modules because the R2 receipt schema does not hash their source. Refer to [PhiPack](PHIPACK.md) for the manifest specification, limitations and security model.
