@@ -2,7 +2,25 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R0 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R1 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R1: Optional modules and a cancellable playground
+
+The browser playground now runs PhiThon programs inside a dedicated **Web Worker**, with a cancel button and a hard wall-clock deadline. A Worker prevents the interpreter from freezing the editor and can be terminated. It is **not** a hardened security sandbox. The Node CLI still runs synchronously and needs process isolation before running untrusted programs.
+
+Import functionality explicitly with `use math` or `use nbg`. Modules are scoped, opt-in, and provide no shell, network or filesystem access. For example:
+
+```phi
+use math
+let values = [3, 6, 9]
+print("Mean:", math_mean(values))
+print("Hypotenuse:", math_distance(0, 0, 3, 4))
+
+use nbg
+print("Toy cycle edges:", nbg_cycle(6))
+```
+
+**NBG note:** `nbg_cycle` and `nbg_neighbors` are *illustrative simple-cycle graph helpers* and are not implementations, simulations, verification or evidence of the NBG research closure model. [More syntax details](docs/LANGUAGE.md).
 
 ## Launch
 
@@ -42,15 +60,17 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0
+## Shipped in R0 and R1
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
 - React playground, console, simulated ledger, examples and downloadable .phi source
 - Node.js CLI with examples and Node built-in test suite
 - Source/token/step/output/call-depth limits
+- R1 opt-in numeric and toy graph modules (`use math`, `use nbg`)
+- R1 browser Worker with deadline and cancellation
 
-**Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs synchronously on the main thread. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
+**Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
 ## Architecture
 
@@ -68,9 +88,9 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R1: stronger syntax, modules, package tools, richer library.
-R2: isolated worker/process runner, explicit capability enforcement and auditing.
-R3: reviewed adapters for SPV, NBG and WhiteHatLedger369, plus real versioned ledger receipts.
+R2: stronger syntax, package tools, richer library and secure process isolation.
+R3: explicit capability enforcement, verified adapters and auditing.
+Future: reviewed adapters for SPV, NBG and WhiteHatLedger369, plus real versioned ledger receipts.
 
 The core language will never silently grant file, shell, or network access.
 
