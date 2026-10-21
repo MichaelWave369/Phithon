@@ -1,0 +1,7 @@
+# Fibonacci numbers and an honest, simulated ledger event.
+let i = 0
+while (i < 10) {
+  print("fib(" + i + ") =", fib(i))
+  i = i + 1
+}
+ledger("FIBONACCI_DEMO", "10 terms emitted")
