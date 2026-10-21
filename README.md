@@ -2,7 +2,22 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R8 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R9 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R9: PhiVibe source-hash intent bridge
+
+Vibe is an independent intent-first compiler. PhiThon is an independent executable language. Vibe also has a guided Python layer called *PhiPython*; the names are similar but the systems are **not interchangeable**.
+
+R9 adds support for Vibe's actual **Phase 8.4 `intent-brief` JSON contract**. Import a Vibe intent brief into the browser for an offline, read-only summary, or create a **hash-bound declared implementation link** from a Vibe specification to a PhiThon program and its optional local libraries.
+
+```sh
+# Generate intent-brief.json using the separate Vibe `vibec` CLI first.
+npm run phi -- vibe-inspect intent-brief.json
+npm run phi -- vibe-link intent-brief.json examples/vibe-contract/hello.vibe examples/vibe-contract/hello.phi --out vibe-phi-link.json
+npm run phi -- vibe-link-check vibe-phi-link.json intent-brief.json examples/vibe-contract/hello.vibe examples/vibe-contract/hello.phi
+```
+
+**This is not translation or semantic equivalence verification.** The link checks source hashes and PhiThon syntax/dependencies, and explicitly records that no Vibe verification or PhiThon execution occurred. It grants no authority. See [PhiVibe R9 integration and limitations](docs/VIBE-BRIDGE.md) and the [example source pair](examples/vibe-contract/).
 
 ## R8: ΦBridge / real SPV offline Evidence Bench compatibility
 
@@ -149,7 +164,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0, R1, R2, R3, R4, R5, R6, R7 and R8
+## Shipped in R0 through R9
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -165,6 +180,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R6 explicit per-run PhiBrain permission and manual NOT_SENT request export (no AI dispatch)
 - R7 CLI-only explicitly confirmed local Ollama dispatch (one selected request; no SPV integration)
 - R8 strict, read-only SPV portable Evidence Bench v0.1 import with provenance-safe summaries
+- R9 Vibe Phase 8.4 intent brief import and hash-bound declared PhiThon implementation links
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -184,7 +200,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R9: separately reviewed SPV live API when one exists, signed provenance verification, richer syntax, stronger OS-level confinement.
+R10: Vibe verifier/proof-brief correspondence, separately reviewed live SPV API if one exists, and stronger OS-level confinement.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 

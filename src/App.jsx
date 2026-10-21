@@ -3,6 +3,7 @@ import { runInWorker } from "./language/runner.js";
 import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
 import { makeBrainHandoff } from "./brain/handoff.js";
 import { inspectSpvBenchJson, SPV_BENCH_MAX_BYTES } from "./bridge/spv-evidence.js";
+import { inspectVibeBriefJson, MAX_VIBE_BRIEF_BYTES } from "./bridge/vibe-intent.js";
 
 const EXAMPLES = [
   { title: "Welcome, Field", label: "Hello World", code: [
@@ -129,6 +130,8 @@ export default function App() {
   const [receiptNotice, setReceiptNotice] = useState("");
   const [spvInspection, setSpvInspection] = useState(null);
   const [spvInspectionError, setSpvInspectionError] = useState("");
+  const [vibeInspection, setVibeInspection] = useState(null);
+  const [vibeInspectionError, setVibeInspectionError] = useState("");
   useEffect(() => () => controllerRef.current?.abort(), []);
 
   function loadExample(i) {
@@ -240,6 +243,27 @@ export default function App() {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  async function importVibeBrief(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    setVibeInspection(null);
+    setVibeInspectionError("");
+    if (!file) return;
+    if (file.size > MAX_VIBE_BRIEF_BYTES) {
+      setVibeInspectionError("PhiVibe: input exceeds 64 KiB");
+      return;
+    }
+    try {
+      const report = inspectVibeBriefJson(await file.text());
+      setVibeInspection(report);
+    } catch (error) {
+      setVibeInspectionError(error instanceof Error ? error.message : String(error));
+    }
+  }
+  function clearVibeBrief() {
+    setVibeInspection(null);
+    setVibeInspectionError("");
+  }
   async function importSpvBench(event) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -333,12 +357,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R8 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R9 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE EIGHT</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE NINE</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -352,7 +376,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.9 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.10 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -382,7 +406,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R8</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R9</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -453,6 +477,22 @@ export default function App() {
                   </div>
                 ))}
               </div>
+              <div className="vibe-bridge-panel">
+                <div className="receipt-heading"><span>◇ ΦVIBE / INTENT BRIDGE</span><span>READ ONLY</span></div>
+                <p className="spv-bench-hint">Import the Phase 8.4 JSON output from <code>vibec intent-brief contract.vibe --report json</code>. PhiThon can inspect declared intent locally. Import does not check the original .vibe bytes, compile code, or prove semantic equivalence.</p>
+                <div className="integrity-actions">
+                  <label className="plain-button upload-label">↑ Inspect Vibe intent JSON<input type="file" accept=".json,application/json" onChange={importVibeBrief} aria-label="Select a Vibe phase 8.4 intent brief for local inspection" /></label>
+                  <button type="button" className="plain-button" onClick={clearVibeBrief} disabled={!vibeInspection && !vibeInspectionError}>Clear intent</button>
+                </div>
+                {vibeInspectionError && <p className="integrity-bad" role="status">{vibeInspectionError}</p>}
+                {vibeInspection && <div className="spv-evidence-results" role="status">
+                  <p className="spv-bench-hint"><strong>{vibeInspection.intentName}</strong> · DECLARED / UNVERIFIED</p>
+                  <p className="spv-bench-hint">{vibeInspection.goal}</p>
+                  <p className="spv-bench-hint">{vibeInspection.inputs.length} inputs · {vibeInspection.outputs.length} outputs · {vibeInspection.preserveCount} preserve rules · {vibeInspection.constraintCount} constraints</p>
+                  <p className="spv-bench-hint">Vibe source SHA-256 claimed: <code className="digest-value">{vibeInspection.sourceSha256}</code></p>
+                  <p className="spv-bench-hint">For an actual hash-bound implementation link, use the CLI <code>vibe-link</code> with the original .vibe source and the .phi source. This browser view cannot certify either.</p>
+                </div>}
+              </div>
               <div className="spv-bench-panel">
                 <div className="receipt-heading"><span>◇ ΦBRIDGE / SPV EVIDENCE</span><span>READ ONLY</span></div>
                 <p className="spv-bench-hint">Import a portable redacted Evidence Bench JSON exported from SuperPhiVessel's local console. This never runs a model, grants routing permission or uploads anything. Imported records are operator-selected and unauthenticated.</p>
@@ -493,7 +533,7 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="playground-warning">R8 imports explicitly selected, redacted SPV Evidence Bench exports offline without dispatch, routing approval, or hidden networking. Local Ollama calls still require the separate confirmed Node CLI flow. Imported SPV records and SHA-256 receipts do not attest source truth.</p>
+          <p className="playground-warning">R9 adds Vibe intent-brief inspection and a CLI source-hash link to PhiThon implementations. Neither implies cross-language semantic preservation or proof of execution. SPV evidence remains offline/unattested and local Ollama dispatch remains separately consented.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
@@ -508,7 +548,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.9.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.10.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>

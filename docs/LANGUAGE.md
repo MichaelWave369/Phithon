@@ -150,3 +150,7 @@ PhiThon language programs still cannot call models themselves. On Node CLI only,
 ## R8: SPV Evidence Bench bridge
 
 The Node CLI `spv-bench-inspect <portable.json>` validates a manually selected, redacted SuperPhiVessel Portable Evidence Bench v0.1 JSON export. It prints provenance-limited descriptive counts and chronological performance observations, masking model names by default. The browser playground has a matching local file inspector. This **does not** grant model execution, change PhiBrain permissions, contact SPV, or promote claims to independently verified evidence. See [SPV Bridge](SPV-BRIDGE.md).
+
+## R9: Vibe intent bridge
+
+Vibe is a distinct intent-first compiler, not PhiThon or Vibe's own PhiPython guided Python layer. The CLI `vibe-inspect` validates Vibe's Phase 8.4 `intent-brief` JSON and reports declared intent only. `vibe-link <brief.json> <contract.vibe> <program.phi> --out <link.json>` checks the *actual Vibe source's* SHA-256 against the claimed brief, parses PhiThon and local module dependencies, then records source SHA-256 hashes and `HUMAN_DECLARED_IMPLEMENTATION` with all verification/authority flags set false. `vibe-link-check` detects source drift relative to the saved link. The browser has a read-only Phase 8.4 intent importer; neither Vibe verification, PhiThon execution nor semantic equivalence is performed. See [PhiVibe](VIBE-BRIDGE.md).

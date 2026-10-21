@@ -87,3 +87,11 @@ h1,h2{font-family:"Space Grotesk",sans-serif;margin:0;letter-spacing:-3px}h1{fon
 .spv-entry{display:flex;flex-direction:column;gap:4px;border-top:1px solid #324959;padding:10px 0;font:11px "DM Mono",monospace;color:#d4e9e1}
 .spv-entry small{font-size:10px;color:#98b6c3}
 @media(max-width:720px){.spv-bench-panel{padding:14px}}
+
+
+/* R9: read-only Vibe intent bridge */
+.vibe-bridge-panel{padding:18px 20px;border-top:1px solid #466052;background:#12242a}
+.vibe-bridge-panel .receipt-heading{color:#b1f4cc}
+.vibe-bridge-panel .spv-bench-hint{overflow-wrap:anywhere}
+.vibe-bridge-panel code.digest-value{display:block;font:11px/1.7 "DM Mono",monospace;white-space:normal;overflow-wrap:anywhere;margin:5px 0}
+@media(max-width:720px){.vibe-bridge-panel{padding:14px}}
