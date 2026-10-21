@@ -1,0 +1,51 @@
+{
+  "schema": "superphivessel.local-console.evidence-bench.bundle.v0.1",
+  "created_at": "2026-10-21T18:30:00.000Z",
+  "scope": "OPERATOR_CHOSEN_PORTABLE_REDACTED",
+  "source_trust": "UNATTESTED_OPERATOR_SELECTED_JSON",
+  "max_entries": 24,
+  "evidence_count": 2,
+  "entries": [
+    {
+      "kind": "PERFORMANCE_RECEIPT",
+      "model": "fixture-model:1b",
+      "output_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "observed_at": "2026-10-21T18:00:00.000Z",
+      "protocol_id": "logic-steps-v1",
+      "trial_elapsed_ms": 12400,
+      "model_load_ns": null,
+      "prompt_eval_ns": null,
+      "generation_eval_ns": null,
+      "generated_tokens": 23,
+      "prompt_tokens": 42,
+      "token_cap_requested": 128,
+      "token_cap_reached": false,
+      "stop_reason": "stop",
+      "provenance": "IMPORTED_OR_OPERATOR_CAPTURED_UNATTESTED",
+      "prompt_included": false,
+      "generated_text_included": false,
+      "authority_granted": false
+    },
+    {
+      "kind": "HUMAN_REVIEW",
+      "model": "fixture-model:1b",
+      "output_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "observed_at": "2026-10-21T18:15:00.000Z",
+      "helpfulness": "4",
+      "completeness": "APPEARS_COMPLETE",
+      "verification": "NOT_CHECKED",
+      "provenance": "OPERATOR_SELF_REPORT_UNATTESTED",
+      "prompt_included": false,
+      "generated_text_included": false,
+      "authority_granted": false
+    }
+  ],
+  "prompt_included": false,
+  "generated_text_included": false,
+  "free_text_notes_included": false,
+  "automatic_ranking_performed": false,
+  "quality_gate_approved": false,
+  "model_routing_approved": false,
+  "cloud_execution_approved": false,
+  "authority_granted": false
+}
