@@ -138,3 +138,7 @@ R4 originally blocked incomplete package receipts. R5 now enables versioned v2 s
 ## R5: Module receipts
 
 `--receipt` chooses the v2 schema for packages with local modules and v1 for standalone programs. `verify` checks both formats without running code. `verify-project` additionally compares the receipt's source snapshot with current `.phi` source and local package files. SHA-256 checksums cannot prove who created the receipt, when it was produced, or whether the program truly executed.
+
+## R6: Permission-gated PhiBrain
+
+`use brain` exposes `brain_request(route, prompt)`, which only stages inert request data and records a SIMULATED ledger event. Host permission `brainGrant: true` is required separately on **each execution**. Routes are the strings `manual`, `local`, or `spv` (intent labels, not network destinations). Five requests and 2,048 characters per prompt are the R6 maxima. The CLI flag `--brain-out <file.json> <file.phi>` explicitly grants staging and saves a NOT_SENT file; the browser uses a per-run consent checkbox and manual JSON export. **Neither connects to AI models or SPV.** See [PhiBrain](PHIBRAIN.md).
