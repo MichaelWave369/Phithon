@@ -192,7 +192,7 @@ test("R13 refuses ambiguous Vibe obligation sample IDs and duplicate upstream ID
 test("R13 parsing refuses oversized payload, malformed data and accepts empty mapping as unknown coverage", async () => {
   const inp=await setup();
   const empty={...bindings(),bindings:[]};
-  assert.equal(parseVibeObligationBindingsJson(JSON.stringify(empty),inp.proofBrief),empty.schema&&empty);
+  assert.deepEqual(parseVibeObligationBindingsJson(JSON.stringify(empty),inp.proofBrief),empty);
   const ledger=await buildVibeObligationLedger({...inp,bindings:empty});
   assert.equal(ledger.associatedSampledObligations,0);
   assert.equal(ledger.unresolvedSampledObligations,2);
