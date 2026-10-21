@@ -2,7 +2,17 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R12 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R13 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R13: Sampled Vibe obligation-to-evidence ledger
+
+The PhiVibe bridge can now **cross-reference individual Vibe proof-brief obligation IDs** with human-selected R11 behavior observations and R12 property observations. It rechecks the actual R9/R10 source correspondence, matches report source hashes and case IDs, and clearly distinguishes **Vibe-reported status**, **associated sample outcomes**, and **obligations that have no chosen evidence**.
+
+```sh
+npm run phi -- vibe-obligations proof-brief.json correspondence.json link.json intent-brief.json contract.vibe implementation.phi behavior-report.json property-report.json bindings.json --out evidence-ledger.json
+```
+
+Vibe's Phase 8.4 proof brief exports **at most 10 sampled obligations**, not a full ledger. R13 explicitly counts omitted obligations and never treats sample matches as independently authenticated or complete preservation proof. See the [obligation-evidence guide](docs/VIBE-OBLIGATIONS.md).
 
 ## R12: Deterministic property sampling for PhiVibe
 
@@ -199,7 +209,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0 through R12
+## Shipped in R0 through R13
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -237,7 +247,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R13: independent review of generated test obligations, stronger provenance and OS-level isolation, and a separately reviewed SPV live protocol only if one exists.
+R14: full Vibe obligation export provenance, stronger signed record validation and OS-level isolation, and a separately reviewed SPV live protocol only if one exists.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 

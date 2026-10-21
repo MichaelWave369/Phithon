@@ -10,10 +10,11 @@ import { inspectVibeBriefJson, validateVibeBrief, createVibePhiLink, verifyVibeP
 import { validateVibeProofBrief, inspectVibeProofBriefJson, createVibeProofCorrespondence, verifyVibeProofCorrespondence, MAX_VIBE_PROOF_BRIEF_BYTES } from "./bridge/vibe-proof.js";
 import { parseVibeVectorsJson, runVibeBehaviorVectors, MAX_VIBE_VECTORS_BYTES } from "./bridge/vibe-behavior.js";
 import { parseVibePropertyPlanJson, runVibePropertyPlan, MAX_VIBE_PROPERTIES_BYTES } from "./bridge/vibe-properties.js";
+import { parseVibeObligationBindingsJson, buildVibeObligationLedger, MAX_VIBE_OBLIGATION_BINDINGS_BYTES } from "./bridge/vibe-obligations.js";
 import { validateLocalDispatch, makeDispatchJournal, dispatchAuthorizedLocal } from "./brain/dispatch-local.js";
 
 const HELP = [
-  "PhiThon R12 · The Language of the Field",
+  "PhiThon R13 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
@@ -29,6 +30,7 @@ const HELP = [
   "  npm run phi -- vibe-proof-inspect my-proof-brief.json",
   "  npm run phi -- vibe-behavior link.json intent-brief.json contract.vibe implementation.phi vectors.json --out behavior-report.json",
   "  npm run phi -- vibe-properties link.json intent-brief.json contract.vibe implementation.phi properties.json --out property-report.json",
+  "  npm run phi -- vibe-obligations proof-brief.json correspondence.json link.json intent-brief.json contract.vibe implementation.phi behavior-report.json property-report.json bindings.json --out evidence-ledger.json",
   "  npm run phi -- vibe-proof-link link.json proof-brief.json intent-brief.json contract.vibe implementation.phi --out correspondence.json",
   "  npm run phi -- vibe-proof-link-check correspondence.json link.json proof-brief.json intent-brief.json contract.vibe implementation.phi",
   "  npm run phi -- vibe-link my-intent-brief.json contract.vibe implementation.phi --out link.json",
@@ -55,6 +57,7 @@ const HELP = [
   "Passing selected examples is NOT exhaustive equivalence or Vibe preservation proof.",
   "vibe-properties generates bounded, deterministic numeric inputs for a human-declared property.",
   "Seeded finite sample matches are NOT universal proof or trusted execution attestation.",
+  "vibe-obligations maps reviewed associations to Vibe\x27s proof SAMPLE only; no verification promotion.",
   "Vibe is an independent intent compiler; PhiPython is Vibe\x27s guided Python layer, NOT PhiThon.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
@@ -386,9 +389,53 @@ async function vibePropertiesCommand(linkPath, briefPath, vibePath, phiPath, pla
   }
 }
 
+async function vibeObligationsCommand(proofPath, correspondencePath, linkPath, briefPath,
+  vibePath, phiPath, behaviorPath, propertyPath, bindingsPath, outPath) {
+  try {
+    const proofBrief = await readVibeProofBrief(proofPath);
+    const correspondence = JSON.parse(await readLimited(correspondencePath, 40_000));
+    const link = JSON.parse(await readLimited(linkPath, 40_000));
+    const intentBrief = await readVibeBrief(briefPath);
+    const vibeSource = await readLimited(vibePath, 100_000);
+    const phiSource = await readLimited(phiPath, 100_000);
+    const modules = await loadProjectModules(phiPath);
+    const behaviorReport = JSON.parse(await readLimited(behaviorPath, 100_000));
+    const propertyReport = JSON.parse(await readLimited(propertyPath, 100_000));
+    const bindings = parseVibeObligationBindingsJson(
+      await readLimited(bindingsPath, MAX_VIBE_OBLIGATION_BINDINGS_BYTES),
+      proofBrief
+    );
+    const record = await buildVibeObligationLedger({
+      link, intentBrief, proofBrief, correspondence, vibeSource, phiSource,
+      modules, behaviorReport, propertyReport, bindings
+    });
+    await writeFile(outPath, JSON.stringify(record, null, 2) + "\n", {
+      encoding: "utf8", flag: "wx", mode: 0o600
+    });
+    console.log("PHIVIBE OBLIGATIONS: OPERATOR_ASSOCIATIONS_UNATTESTED");
+    console.log("Vibe obligations reported:", record.obligationsTotalReported,
+      "In proof sample:", record.obligationsInProofSample,
+      "Not exported:", record.obligationsOmittedFromProofSample);
+    console.log("Sampled obligations with associations:", record.associatedSampledObligations,
+      "Without all sampled matches:", record.unresolvedSampledObligations);
+    console.log("Record:", outPath);
+    console.log("No semantic coverage proof, execution attestation or authority granted.");
+    if (record.unresolvedSampledObligations > 0 || record.obligationsOmittedFromProofSample > 0) {
+      console.log("STATUS: INCOMPLETE EVIDENCE; inspect record before claiming coverage.");
+    }
+  } catch (error) {
+    console.error("PHIVIBE OBLIGATIONS REFUSED:",
+      error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
+} else if (args[0] === "vibe-obligations" && args.length === 12 && args[10] === "--out") {
+  await vibeObligationsCommand(args[1], args[2], args[3], args[4], args[5], args[6],
+    args[7], args[8], args[9], args[11]);
 } else if (args[0] === "vibe-properties" && args.length === 8 && args[6] === "--out") {
   await vibePropertiesCommand(args[1], args[2], args[3], args[4], args[5], args[7]);
 } else if (args[0] === "vibe-behavior" && args.length === 8 && args[6] === "--out") {
@@ -428,7 +475,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R12, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R13, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();

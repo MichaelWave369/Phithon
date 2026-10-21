@@ -166,3 +166,7 @@ Vibe is a distinct intent-first compiler, not PhiThon or Vibe's own PhiPython gu
 ## R12: Deterministic finite property tests
 
 `vibe-properties <link> <intent-brief> <contract.vibe> <program.phi> <properties.json> --out <report.json>` runs 3..12 bounded seeded integer samples with explicit operator-authored property checks. A current valid R9 source link and a real unary PhiThon `fn` are required. Four narrow property modes: affine numeric relation, nonnegative output, monotonic nondecreasing outputs, and repeatability of two separate bounded child runs. Reports contain input/harness/output hashes rather than raw values. The R12 runner does not run Vibe, prove Vibe obligations, or establish semantic equivalence. [R12 guide](VIBE-PROPERTIES.md).
+
+## R13: Vibe sampled-obligation evidence map
+
+`vibe-obligations <proof-brief.json> <correspondence.json> <link.json> <intent-brief.json> <contract.vibe> <implementation.phi> <behavior-report.json> <property-report.json> <bindings.json> --out <ledger.json>` reads but never executes. It verifies R9/R10 source correspondence, validates R11/R12 reported case totals/links, and correlates manually selected case IDs with a **sample of up to 10** IDs exposed by Vibe's existing Phase 8.4 proof brief. The output separates Vibe-reported pass/fail from separately reported test observations and marks missing associations and omitted obligations. All flags for semantic coverage, formal equivalence, independent execution attestation and model grants remain false. See [R13 guide](VIBE-OBLIGATIONS.md).

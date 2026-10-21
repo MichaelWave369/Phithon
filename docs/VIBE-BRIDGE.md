@@ -137,3 +137,7 @@ R11 adds a Node CLI-only, separately reviewed `vibe-behavior` command. It checks
 ## R12 seeded numeric checks
 
 The new `vibe-properties` CLI extends R11 selected examples with **deterministically generated finite numeric input samples** and narrowly typed operator-declared property checks. It retains R9 source integrity gates, PhiShield child limits, and an explicit `UNATTESTED` provenance. The output does not certify Vibe's full preservation checks. [Full R12 property guide](VIBE-PROPERTIES.md).
+
+## R13 obligation association (not coverage proof)
+
+R13 reads the Phase 8.4 `obligations_sample` already included in Vibe's proof brief. An explicit operator-authored binding manifest can reference particular R11 and R12 test rows. The ledger records reported matches, mismatches, errors and missing associations while **explicitly counting proof obligations not exported in the sample**. It does not infer equivalence, causal coverage, trust or a Vibe verifier outcome independently. [Details](VIBE-OBLIGATIONS.md).
