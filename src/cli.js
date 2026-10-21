@@ -33,6 +33,9 @@ async function readLimited(path, maxBytes = 400_000) {
 
 async function run(source, receiptPath = null, modules = {}) {
   try {
+    if (receiptPath && Object.keys(modules).length) {
+      throw new Error("PhiPack: R2 receipt format does not bind imported module source; use a module-free program for --receipt");
+    }
     const execution = await runIsolated(source, { modules });
     for (const line of execution.output) console.log(line);
     if (execution.result !== "null" && execution.output.length === 0) console.log(execution.result);
