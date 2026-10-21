@@ -141,3 +141,7 @@ The new `vibe-properties` CLI extends R11 selected examples with **deterministic
 ## R13 obligation association (not coverage proof)
 
 R13 reads the Phase 8.4 `obligations_sample` already included in Vibe's proof brief. An explicit operator-authored binding manifest can reference particular R11 and R12 test rows. The ledger records reported matches, mismatches, errors and missing associations while **explicitly counting proof obligations not exported in the sample**. It does not infer equivalence, causal coverage, trust or a Vibe verifier outcome independently. [Details](VIBE-OBLIGATIONS.md).
+
+## R14 full original artifact
+
+The optional R14 `vibe-full-obligations` command accepts Vibe's original `.vibe.proof.json` v1 artifact and maps the complete obligation array, beyond Phase 8.4's compact first ten entries. It rechecks the short brief and R9–R12 source-linked input records; the full JSON is not uploaded, executed or included in the exported ledger. The original input is operator-selected and **UNATTESTED**. [R14 full proof workflow](VIBE-FULL-PROOF.md).

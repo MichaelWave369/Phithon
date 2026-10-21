@@ -31,14 +31,16 @@ function requireOk(ok, why) { if (!ok) throw new TypeError("PhiVibe obligations:
 function validDigest(value) { return typeof value === "string" && SHA.test(value); }
 function finiteCount(value) { return Number.isSafeInteger(value) && value >= 0 && value <= 12; }
 
-export function validateVibeObligationBindings(mapping, proof) {
+export function validateVibeObligationBindings(mapping, proof, fullObligations = null) {
   validateVibeProofBrief(proof);
   requireOk(same(mapping, ["schema","provenance","bindings"]) &&
     mapping.schema === VIBE_OBLIGATION_BINDINGS_SCHEMA &&
     mapping.provenance === "OPERATOR_CHOSEN_ASSOCIATION_UNATTESTED" &&
-    Array.isArray(mapping.bindings) && mapping.bindings.length <= 10,
+    Array.isArray(mapping.bindings) && mapping.bindings.length <=
+      (fullObligations === null ? 10 : 512),
     "invalid binding manifest");
-  const sample = proof.preserve_constraint_summary.obligations_sample;
+  const sample = fullObligations ?? proof.preserve_constraint_summary.obligations_sample;
+  requireOk(Array.isArray(sample) && sample.length <= 512, "invalid obligation inventory");
   const ids = sample.map(x => x.obligation_id);
   // Ambiguous/null IDs from upstream cannot be safely identified here.
   requireOk(ids.every(x => typeof x === "string" && NAME.test(x)) &&
@@ -136,12 +138,12 @@ function checkReportLink(report, link, kind) {
 }
 export async function buildVibeObligationLedger({
   link, intentBrief, proofBrief, correspondence, vibeSource, phiSource,
-  modules = {}, behaviorReport, propertyReport, bindings
+  modules = {}, behaviorReport, propertyReport, bindings, fullObligations = null
 }) {
   validateVibeBrief(intentBrief);
   validateVibeProofBrief(proofBrief);
   validateModuleRegistry(modules);
-  validateVibeObligationBindings(bindings, proofBrief);
+  validateVibeObligationBindings(bindings, proofBrief, fullObligations);
   const checked = await verifyVibeProofCorrespondence(
     correspondence, link, proofBrief, intentBrief, vibeSource, phiSource, modules
   );
@@ -155,7 +157,8 @@ export async function buildVibeObligationLedger({
   const bindingsById = new Map(bindings.bindings.map(x => [x.obligationId,x.evidence]));
   const b = new Map(behaviorReport.cases.map(x => [x.id,x]));
   const p = new Map(propertyReport.cases.map(x => [x.index,x]));
-  const rows = proofBrief.preserve_constraint_summary.obligations_sample.map((entry,index) => {
+  const sourceRows = fullObligations ?? proofBrief.preserve_constraint_summary.obligations_sample;
+  const rows = sourceRows.map((entry,index) => {
     const refs = bindingsById.get(entry.obligation_id) ?? [];
     const observations = refs.map(ref => {
       const observed = ref.type === "behavior" ? b.get(ref.caseId) : p.get(ref.sampleIndex);

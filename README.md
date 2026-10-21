@@ -2,7 +2,17 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R13 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R14 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R14: Full Vibe v1 proof obligation inventory
+
+R13's brief-only association was capped at ten Vibe obligations. PhiThon now reads the **actual original Vibe `.vibe.proof.json` v1** (the versioned artifact emitted by Vibe `verify-proof`), validates the complete `obligations` array against the Phase 8.4 brief's count and first-ten projection, and allows evidence associations for **all included obligations**.
+
+```sh
+npm run phi -- vibe-full-obligations full.vibe.proof.json proof-brief.json correspondence.json link.json intent-brief.json contract.vibe implementation.phi behavior-report.json property-report.json bindings.json --out complete-ledger.json
+```
+
+Full inventory does **not** imply authenticated proof or complete semantic coverage. It remains an operator-selected source report. Privacy-sensitive descriptions/paths are never copied into the output. [R14 original-proof guide](docs/VIBE-FULL-PROOF.md).
 
 ## R13: Sampled Vibe obligation-to-evidence ledger
 
@@ -209,7 +219,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0 through R13
+## Shipped in R0 through R14
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -247,7 +257,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R14: full Vibe obligation export provenance, stronger signed record validation and OS-level isolation, and a separately reviewed SPV live protocol only if one exists.
+R15: reviewed original Vibe artifact attestation options, stronger OS-level isolation and safely scoped protocol bridges only after contracts are verified.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
