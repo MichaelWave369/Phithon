@@ -1,0 +1,5 @@
+# Independent PhiThon implementation candidate.
+# Nothing about source proximity proves this meets the Vibe contract.
+fn evaluate(x) {
+  return x * 2
+}
