@@ -1,0 +1,5 @@
+# PhiThon implementation candidate, NOT certified as equivalent to Vibe.
+let person = "Field"
+let answer = 6 * 7
+print("Hello", person)
+print("Answer:", answer)
