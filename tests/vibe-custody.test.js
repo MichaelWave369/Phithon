@@ -124,7 +124,8 @@ test("R15 refuses modified, malformed, and invented signed metadata",()=>{
     x=>{x.schema="v2";},
   ]){
     const changed=structuredClone(envelope);mutate(changed);
-    if(/^[A-Za-z0-9+/]{86}==$/.test(changed.signatureBase64)
+    if(Object.keys(changed).length===Object.keys(envelope).length
+        && /^[A-Za-z0-9+/]{86}==$/.test(changed.signatureBase64)
         && changed.provenance===envelope.provenance
         && changed.algorithm===envelope.algorithm
         && changed.schema===envelope.schema
