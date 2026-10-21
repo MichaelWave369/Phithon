@@ -381,12 +381,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R11 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R12 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE ELEVEN</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE TWELVE</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -400,7 +400,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.12 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.13 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -430,7 +430,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R11</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R12</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -572,7 +572,7 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="playground-warning">R11 adds CLI-only reviewed behavioral vectors: selected PhiThon functions run inside bounded children and outcomes are recorded with SHA-256 hashes. Passing samples is not proof of full Vibe intent preservation, execution provenance or semantic equivalence.</p>
+          <p className="playground-warning">R12 adds CLI-only finite, seeded numeric property testing on top of the source-linked R11 behavior runner. These reviewed sample matches do not prove universal properties, semantic equivalence or trusted execution provenance.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
@@ -587,7 +587,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.12.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.13.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>

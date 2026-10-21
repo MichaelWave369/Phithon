@@ -9,10 +9,11 @@ import { inspectSpvBenchJson, SPV_BENCH_MAX_BYTES } from "./bridge/spv-evidence.
 import { inspectVibeBriefJson, validateVibeBrief, createVibePhiLink, verifyVibePhiLink, MAX_VIBE_BRIEF_BYTES } from "./bridge/vibe-intent.js";
 import { validateVibeProofBrief, inspectVibeProofBriefJson, createVibeProofCorrespondence, verifyVibeProofCorrespondence, MAX_VIBE_PROOF_BRIEF_BYTES } from "./bridge/vibe-proof.js";
 import { parseVibeVectorsJson, runVibeBehaviorVectors, MAX_VIBE_VECTORS_BYTES } from "./bridge/vibe-behavior.js";
+import { parseVibePropertyPlanJson, runVibePropertyPlan, MAX_VIBE_PROPERTIES_BYTES } from "./bridge/vibe-properties.js";
 import { validateLocalDispatch, makeDispatchJournal, dispatchAuthorizedLocal } from "./brain/dispatch-local.js";
 
 const HELP = [
-  "PhiThon R11 · The Language of the Field",
+  "PhiThon R12 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
@@ -27,6 +28,7 @@ const HELP = [
   "  npm run phi -- vibe-inspect my-intent-brief.json",
   "  npm run phi -- vibe-proof-inspect my-proof-brief.json",
   "  npm run phi -- vibe-behavior link.json intent-brief.json contract.vibe implementation.phi vectors.json --out behavior-report.json",
+  "  npm run phi -- vibe-properties link.json intent-brief.json contract.vibe implementation.phi properties.json --out property-report.json",
   "  npm run phi -- vibe-proof-link link.json proof-brief.json intent-brief.json contract.vibe implementation.phi --out correspondence.json",
   "  npm run phi -- vibe-proof-link-check correspondence.json link.json proof-brief.json intent-brief.json contract.vibe implementation.phi",
   "  npm run phi -- vibe-link my-intent-brief.json contract.vibe implementation.phi --out link.json",
@@ -51,6 +53,8 @@ const HELP = [
   "vibe-proof-link matches a separately imported Vibe proof brief to an existing link, WITHOUT granting authority.",
   "vibe-behavior runs up to 8 operator-authored cases in separate bounded PhiShield children.",
   "Passing selected examples is NOT exhaustive equivalence or Vibe preservation proof.",
+  "vibe-properties generates bounded, deterministic numeric inputs for a human-declared property.",
+  "Seeded finite sample matches are NOT universal proof or trusted execution attestation.",
   "Vibe is an independent intent compiler; PhiPython is Vibe\x27s guided Python layer, NOT PhiThon.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
@@ -352,9 +356,41 @@ async function vibeBehaviorCommand(linkPath, briefPath, vibePath, phiPath, vecto
   }
 }
 
+async function vibePropertiesCommand(linkPath, briefPath, vibePath, phiPath, planPath, outPath) {
+  try {
+    const link = JSON.parse(await readLimited(linkPath, 40_000));
+    const intentBrief = await readVibeBrief(briefPath);
+    const vibeSource = await readLimited(vibePath, 100_000);
+    const phiSource = await readLimited(phiPath, 100_000);
+    const modules = await loadProjectModules(phiPath);
+    const plan = parseVibePropertyPlanJson(
+      await readLimited(planPath, MAX_VIBE_PROPERTIES_BYTES), intentBrief
+    );
+    const result = await runVibePropertyPlan({
+      link, intentBrief, vibeSource, phiSource, modules, plan
+    });
+    await writeFile(outPath, JSON.stringify(result, null, 2) + "\n", {
+      encoding: "utf8", flag: "wx", mode: 0o600
+    });
+    console.log("PHIVIBE PROPERTIES:", result.outcome);
+    console.log("Property:", result.propertyKind, "seed:", result.seed);
+    console.log("Samples:", result.sampleCount, "Matches:", result.matches,
+      "Mismatches:", result.mismatches, "Errors:", result.errors,
+      "Inconclusive:", result.inconclusive);
+    console.log("Report:", outPath);
+    console.log("Finite sample results are NOT general semantic equivalence or Vibe proof.");
+    if (result.outcome !== "ALL_SAMPLED_CHECKS_MATCH") process.exitCode = 1;
+  } catch (error) {
+    console.error("PHIVIBE PROPERTIES REFUSED:", error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
+} else if (args[0] === "vibe-properties" && args.length === 8 && args[6] === "--out") {
+  await vibePropertiesCommand(args[1], args[2], args[3], args[4], args[5], args[7]);
 } else if (args[0] === "vibe-behavior" && args.length === 8 && args[6] === "--out") {
   await vibeBehaviorCommand(args[1], args[2], args[3], args[4], args[5], args[7]);
 } else if (args[0] === "vibe-proof-inspect" && args.length === 2) {
@@ -392,7 +428,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R11, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R12, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();

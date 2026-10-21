@@ -2,7 +2,19 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R11 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R12 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R12: Deterministic property sampling for PhiVibe
+
+PhiVibe now supports **reviewed numeric properties** across finite, reproducibly generated samples. The CLI validates the original `.vibe`/`.phi`/PhiPack source link, chooses up to 12 bounded integer inputs using a fixed 32-bit seed (including domain edges), and runs each input in a fresh PhiShield child with **no model/network authorization**.
+
+Supported operator-declared checks: `affine`, `nonnegative`, `monotonic_nondecreasing` and `repeatable` (two independent child executions per sample). The report stores result/status/source SHA-256 digests and never claims that sample matches prove universal properties or full Vibe-to-PhiThon equivalence.
+
+```sh
+npm run phi -- vibe-properties source-link.json intent-brief.json examples/vibe-behavior/contract.vibe examples/vibe-behavior/implementation.phi examples/vibe-behavior/properties.json --out property-report.json
+```
+
+See [R12 finite property guide](docs/VIBE-PROPERTIES.md) and [the included operator-authored plan](examples/vibe-behavior/properties.json).
 
 ## R11: Reviewed behavior vectors with real PhiShield execution
 
@@ -187,7 +199,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0 through R11
+## Shipped in R0 through R12
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -225,7 +237,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R12: wider behavioral contract coverage and independently reviewed Vibe obligations, separately reviewed live SPV API if one exists, and stronger OS-level confinement.
+R13: independent review of generated test obligations, stronger provenance and OS-level isolation, and a separately reviewed SPV live protocol only if one exists.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 

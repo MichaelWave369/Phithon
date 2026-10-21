@@ -1,0 +1,15 @@
+{
+  "schema": "phithon.vibe-property-plan.v1",
+  "intentName": "PhiDouble",
+  "entryFunction": "evaluate",
+  "provenance": "OPERATOR_DECLARED_PROPERTY_UNATTESTED",
+  "seed": 369,
+  "minInput": -12,
+  "maxInput": 12,
+  "samples": 6,
+  "property": {
+    "kind": "affine",
+    "factor": 2,
+    "offset": 0
+  }
+}
