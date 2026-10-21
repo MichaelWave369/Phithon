@@ -2,7 +2,22 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R3 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R4 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R4: PhiPack local modules
+
+Reusable `.phi` libraries are now first-class. Declare `export fn name(...)` or `export let name = ...` in a module, then `import moduleName` in your program. Exports appear as `moduleName_name`, preserving private lexical scopes and supporting transitive imports.
+
+Node CLI files load modules from a local `phithon.pack.json` adjacent to the main `.phi`. Its module entries are explicitly named, restricted to regular files in the same directory and **never downloaded**. `check` parses the full module graph without running the code. The browser playground includes a Library Workshop for editing modules and saving individual source files and the manifest.
+
+```sh
+npm run phi -- examples/packages/main.phi
+npm run phi -- check examples/packages/main.phi
+```
+
+**Important:** R2 receipts cannot bind imported module sources. R4 refuses to seal module-containing runs until a later receipt schema can include their source digests. Module-free receipts continue to work.
+
+See the [PhiPack R4 reference](docs/PHIPACK.md).
 
 ## R3: PhiShield CLI process boundaries
 
@@ -85,7 +100,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0, R1, R2 and R3
+## Shipped in R0, R1, R2, R3 and R4
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -96,6 +111,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R1 browser Worker with deadline and cancellation
 - R2 SHA-256 chained JSON receipts with import/export validation
 - R3 fixed-command child runner with deadline, bounded pipes, and nonexecuting syntax checking
+- R4 local import/export modules, manifest loader, circular dependency checks, and browser library editor
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -115,7 +131,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R4: stronger syntax, package tools, richer library and stronger process isolation.
+R5: module-aware receipt schema, richer syntax and stronger process isolation.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
