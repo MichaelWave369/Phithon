@@ -3,15 +3,16 @@ import { readFile, stat, writeFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import { runIsolated } from "./cli/isolate.js";
 import { loadProjectModules } from "./cli/package-loader.js";
-import { createReceipt, verifyReceipt } from "./ledger/receipts.js";
+import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
 
 const HELP = [
-  "PhiThon R4 · The Language of the Field",
+  "PhiThon R5 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
   "  npm run phi -- check examples/hello.phi",
   "  npm run phi -- examples/packages/main.phi  # finds adjacent phithon.pack.json",
+  "  npm run phi -- --receipt examples/packages/main.phi",
   "  npm run phi -- --receipt examples/modules.phi",
   "  npm run phi -- verify examples/modules.phi.receipt.json",
   "  npm run phi                            # stateless one-line REPL",
@@ -21,7 +22,7 @@ const HELP = [
   "This is NOT a secure OS sandbox for adversarial code.",
   "check parses .phi source and adjacent local package without executing it.",
   "Only regular .phi files named in phithon.pack.json are loaded; never downloaded.",
-  "verify hashes JSON receipts without executing the included source.",
+  "verify checks v1 standalone and v2 module-complete JSON without running it.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
 
@@ -33,9 +34,6 @@ async function readLimited(path, maxBytes = 400_000) {
 
 async function run(source, receiptPath = null, modules = {}) {
   try {
-    if (receiptPath && Object.keys(modules).length) {
-      throw new Error("PhiPack: R2 receipt format does not bind imported module source; use a module-free program for --receipt");
-    }
     const execution = await runIsolated(source, { modules });
     for (const line of execution.output) console.log(line);
     if (execution.result !== "null" && execution.output.length === 0) console.log(execution.result);
@@ -43,9 +41,12 @@ async function run(source, receiptPath = null, modules = {}) {
     console.error("PhiThon:", execution.steps, "steps");
 
     if (receiptPath) {
-      const receipt = await createReceipt(source, execution);
+      const receipt = Object.keys(modules).length
+        ? await createPackageReceipt(source, execution, modules)
+        : await createReceipt(source, execution);
       await writeFile(receiptPath, JSON.stringify(receipt, null, 2) + "\n", { encoding: "utf8", flag: "wx" });
       console.log("Saved integrity receipt:", receiptPath);
+      console.log("Receipt schema:", receipt.schema);
       console.log("Receipt SHA-256:", receipt.receiptHash);
     }
   } catch (error) {
@@ -95,7 +96,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R4, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R5, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();
