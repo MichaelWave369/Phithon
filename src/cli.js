@@ -12,10 +12,11 @@ import { parseVibeVectorsJson, runVibeBehaviorVectors, MAX_VIBE_VECTORS_BYTES } 
 import { parseVibePropertyPlanJson, runVibePropertyPlan, MAX_VIBE_PROPERTIES_BYTES } from "./bridge/vibe-properties.js";
 import { parseVibeObligationBindingsJson, buildVibeObligationLedger, MAX_VIBE_OBLIGATION_BINDINGS_BYTES } from "./bridge/vibe-obligations.js";
 import { parseFullVibeProofJson, buildFullVibeObligationLedger, MAX_VIBE_FULL_PROOF_BYTES } from "./bridge/vibe-full-proof.js";
+import { signVibeProofCustody, verifyVibeProofCustody, parseVibeCustodyEnvelopeJson, MAX_VIBE_CUSTODY_ENVELOPE_BYTES, MAX_VIBE_CUSTODY_KEY_BYTES } from "./bridge/vibe-custody.js";
 import { validateLocalDispatch, makeDispatchJournal, dispatchAuthorizedLocal } from "./brain/dispatch-local.js";
 
 const HELP = [
-  "PhiThon R14 · The Language of the Field",
+  "PhiThon R15 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
@@ -33,6 +34,8 @@ const HELP = [
   "  npm run phi -- vibe-properties link.json intent-brief.json contract.vibe implementation.phi properties.json --out property-report.json",
   "  npm run phi -- vibe-obligations proof-brief.json correspondence.json link.json intent-brief.json contract.vibe implementation.phi behavior-report.json property-report.json bindings.json --out evidence-ledger.json",
   "  npm run phi -- vibe-full-obligations full.vibe.proof.json proof-brief.json correspondence.json link.json intent-brief.json contract.vibe implementation.phi behavior-report.json property-report.json bindings.json --out complete-ledger.json",
+  "  npm run phi -- vibe-custody-sign full.vibe.proof.json proof-brief.json contract.vibe private.pem --out custody.json --confirm-sign",
+  "  npm run phi -- vibe-custody-check custody.json full.vibe.proof.json proof-brief.json contract.vibe public.pem",
   "  npm run phi -- vibe-proof-link link.json proof-brief.json intent-brief.json contract.vibe implementation.phi --out correspondence.json",
   "  npm run phi -- vibe-proof-link-check correspondence.json link.json proof-brief.json intent-brief.json contract.vibe implementation.phi",
   "  npm run phi -- vibe-link my-intent-brief.json contract.vibe implementation.phi --out link.json",
@@ -62,6 +65,8 @@ const HELP = [
   "vibe-obligations maps reviewed associations to Vibe\x27s proof SAMPLE only; no verification promotion.",
   "vibe-full-obligations uses an original Vibe v1 proof artifact to map ALL reported obligations.",
   "Complete record inventory is NOT authenticated verification or full behavioral coverage.",
+  "R15 Ed25519 custody signatures bind bytes and a key, NOT compiler execution or signer identity.",
+  "Signing requires --confirm-sign; verify uses an explicitly supplied OUT-OF-BAND public key.",
   "Vibe is an independent intent compiler; PhiPython is Vibe\x27s guided Python layer, NOT PhiThon.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
@@ -474,9 +479,60 @@ async function vibeFullObligationsCommand(fullPath, proofPath, correspondencePat
   }
 }
 
+async function vibeCustodySignCommand(fullPath, briefPath, sourcePath, keyPath, outPath) {
+  try {
+    const rawProof=await readLimited(fullPath,MAX_VIBE_FULL_PROOF_BYTES);
+    const proofBrief=await readVibeProofBrief(briefPath);
+    const vibeSource=await readLimited(sourcePath,100_000);
+    const privateKeyPem=await readLimited(keyPath,MAX_VIBE_CUSTODY_KEY_BYTES);
+    const envelope=signVibeProofCustody({
+      rawProof,proofBrief,vibeSource,privateKeyPem
+    });
+    await writeFile(outPath,JSON.stringify(envelope,null,2)+"\n",{
+      encoding:"utf8",flag:"wx",mode:0o600
+    });
+    console.log("PHIVIBE CUSTODY SIGNED: OPERATOR-SELECTED BYTES");
+    console.log("Public key SPKI SHA-256:",envelope.publicKeySpkiSha256);
+    console.log("Envelope saved:",outPath);
+    console.log("No compiler run, identity verification or execution attestation.");
+  } catch(error) {
+    console.error("PHIVIBE CUSTODY SIGN REFUSED:",
+      error instanceof Error?error.message:String(error));
+    process.exitCode=1;
+  }
+}
+
+async function vibeCustodyCheckCommand(envelopePath,fullPath,briefPath,sourcePath,keyPath) {
+  try {
+    const envelope=parseVibeCustodyEnvelopeJson(
+      await readLimited(envelopePath,MAX_VIBE_CUSTODY_ENVELOPE_BYTES)
+    );
+    const rawProof=await readLimited(fullPath,MAX_VIBE_FULL_PROOF_BYTES);
+    const proofBrief=await readVibeProofBrief(briefPath);
+    const vibeSource=await readLimited(sourcePath,100_000);
+    const publicKeyPem=await readLimited(keyPath,MAX_VIBE_CUSTODY_KEY_BYTES);
+    const report=verifyVibeProofCustody({
+      envelope,rawProof,proofBrief,vibeSource,publicKeyPem
+    });
+    console.log("PHIVIBE CUSTODY: VERIFIED SIGNATURE FOR SELECTED PUBLIC KEY");
+    console.log(JSON.stringify(report,null,2));
+    console.log("Public-key provenance and actual Vibe execution are NOT attested.");
+  } catch(error) {
+    console.error("PHIVIBE CUSTODY CHECK FAILED:",
+      error instanceof Error?error.message:String(error));
+    process.exitCode=1;
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
+} else if (args[0] === "vibe-custody-sign" && args.length === 9 &&
+           args[5] === "--out" && args[7] === "--confirm-sign") {
+  // Intentional: strict spelling/position. No silent/private-key signing.
+  await vibeCustodySignCommand(args[1],args[2],args[3],args[4],args[6]);
+} else if (args[0] === "vibe-custody-check" && args.length === 6) {
+  await vibeCustodyCheckCommand(args[1],args[2],args[3],args[4],args[5]);
 } else if (args[0] === "vibe-full-obligations" && args.length === 13 && args[11] === "--out") {
   await vibeFullObligationsCommand(args[1],args[2],args[3],args[4],args[5],args[6],
     args[7],args[8],args[9],args[10],args[12]);
@@ -522,7 +578,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R14, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R15, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();
