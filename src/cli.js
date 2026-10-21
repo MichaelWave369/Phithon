@@ -527,7 +527,7 @@ async function vibeCustodyCheckCommand(envelopePath,fullPath,briefPath,sourcePat
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
-} else if (args[0] === "vibe-custody-sign" && args.length === 9 &&
+} else if (args[0] === "vibe-custody-sign" && args.length === 8 &&
            args[5] === "--out" && args[7] === "--confirm-sign") {
   // Intentional: strict spelling/position. No silent/private-key signing.
   await vibeCustodySignCommand(args[1],args[2],args[3],args[4],args[6]);
