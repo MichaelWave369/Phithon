@@ -4,9 +4,10 @@ import { createInterface } from "node:readline";
 import { runIsolated } from "./cli/isolate.js";
 import { loadProjectModules } from "./cli/package-loader.js";
 import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
+import { makeBrainHandoff } from "./brain/handoff.js";
 
 const HELP = [
-  "PhiThon R5 · The Language of the Field",
+  "PhiThon R6 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
@@ -14,6 +15,7 @@ const HELP = [
   "  npm run phi -- examples/packages/main.phi  # finds adjacent phithon.pack.json",
   "  npm run phi -- --receipt examples/packages/main.phi",
   "  npm run phi -- --receipt examples/modules.phi",
+  "  npm run phi -- --brain-out requests.json examples/brain.phi",
   "  npm run phi -- verify examples/modules.phi.receipt.json",
   "  npm run phi -- verify-project myprogram.phi.receipt.json myprogram.phi",
   "  npm run phi                            # stateless one-line REPL",
@@ -25,6 +27,8 @@ const HELP = [
   "Only regular .phi files named in phithon.pack.json are loaded; never downloaded.",
   "verify checks v1 standalone and v2 module-complete JSON without running it.",
   "verify-project compares a receipt with source and local package on disk.",
+  "--brain-out grants brain.requests ONLY for this run, saving NOT_SENT JSON.",
+  "No model call, SPV connection or network dispatch occurs automatically.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
 
@@ -34,13 +38,20 @@ async function readLimited(path, maxBytes = 400_000) {
   return readFile(path, "utf8");
 }
 
-async function run(source, receiptPath = null, modules = {}) {
+async function run(source, receiptPath = null, modules = {}, brainOutPath = null) {
   try {
-    const execution = await runIsolated(source, { modules });
+    const execution = await runIsolated(source, { modules, brainGrant: brainOutPath !== null });
     for (const line of execution.output) console.log(line);
     if (execution.result !== "null" && execution.output.length === 0) console.log(execution.result);
     if (execution.ledger.length) console.log("Ledger entries (SIMULATED):", JSON.stringify(execution.ledger, null, 2));
     console.error("PhiThon:", execution.steps, "steps");
+
+    if (brainOutPath) {
+      const payload = makeBrainHandoff(execution.brainRequests ?? []);
+      await writeFile(brainOutPath, JSON.stringify(payload, null, 2) + "\n", { encoding: "utf8", flag: "wx" });
+      console.log("PhiBrain handoff created (NOT SENT):", brainOutPath);
+      console.log("Requests queued:", payload.requests.length);
+    }
 
     if (receiptPath) {
       const receipt = Object.keys(modules).length
@@ -117,6 +128,9 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   await verifyProject(args[1], args[2]);
 } else if (args[0] === "check" && args.length === 2) {
   await check(args[1]);
+} else if (args[0] === "--brain-out" && args.length === 3) {
+  try { await run(await readLimited(args[2]), null, await loadProjectModules(args[2]), args[1]); }
+  catch (error) { console.error("Cannot prepare PhiBrain handoff:", error.message); process.exitCode = 1; }
 } else if (args[0] === "--receipt" && args.length === 2) {
   try { await run(await readLimited(args[1]), args[1] + ".receipt.json", await loadProjectModules(args[1])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
@@ -124,7 +138,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R5, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R6, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();
