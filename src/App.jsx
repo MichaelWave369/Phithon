@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { runInWorker } from "./language/runner.js";
-import { createReceipt, verifyReceipt } from "./ledger/receipts.js";
+import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
 
 const EXAMPLES = [
   { title: "Welcome, Field", label: "Hello World", code: [
@@ -164,13 +164,11 @@ export default function App() {
       setResult(data.result);
       setStatus("ok");
       // Receipt integrity is separate from the executed program's in-memory ledger.
-      // R2 receipts do NOT bind module bytes: refuse misleading partial receipts.
-      if (Object.keys(library).length) {
-        setReceiptNotice("PhiPack modules are not included in R2 receipt hashes. Receipt export is disabled for module runs until the schema binds module sources.");
-        return;
-      }
+      // R5: snapshot the full local module registry into the v2 receipt.
       try {
-        const sealed = await createReceipt(source, data);
+        const sealed = Object.keys(library).length
+          ? await createPackageReceipt(source, data, library)
+          : await createReceipt(source, data);
         if (request !== requestRef.current) return;
         const check = await verifyReceipt(sealed);
         if (request !== requestRef.current) return;
@@ -283,12 +281,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R4 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R5 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE FOUR</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE FIVE</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -302,7 +300,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.5 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.6 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -332,7 +330,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R4</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R5</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -392,9 +390,9 @@ export default function App() {
                 <div className="receipt-heading"><span>◇ PHILEDGER / SHA-256</span><span>{receipt ? "SEALED" : "NOT SEALED"}</span></div>
                 {receipt && (
                   <>
-                    <p className="integrity-intro">Receipt digest</p>
+                    <p className="integrity-intro">{receipt.schema.endsWith(".v2") ? "PhiPack v2 / source-complete" : "Standalone v1"} · receipt digest</p>
                     <code className="digest-value">{receipt.receiptHash}</code>
-                    <p className="integrity-summary">{integrity?.valid ? "INTERNAL HASH CHAIN VALID" : integrity ? "HASH CHAIN MISMATCH" : "CHECKING HASHES"} · {receipt.events.length} event(s)</p>
+                    <p className="integrity-summary">{integrity?.valid ? "INTERNAL HASH CHAIN VALID" : integrity ? "HASH CHAIN MISMATCH" : "CHECKING HASHES"} · {receipt.events.length} event(s){receipt.schema.endsWith(".v2") ? " · " + Object.keys(receipt.modules).length + " module(s) bound" : ""}</p>
                   </>
                 )}
                 {!receipt && <p className="integrity-intro">Run a program to build a portable integrity receipt.</p>}
@@ -402,19 +400,19 @@ export default function App() {
                   <button type="button" className="plain-button" onClick={exportReceipt} disabled={!receipt}>↓ Export receipt</button>
                   <label className="plain-button upload-label">↑ Verify JSON<input type="file" accept=".json,application/json" onChange={importReceipt} aria-label="Import receipt JSON to verify SHA-256 integrity" /></label>
                 </div>
-                {importIntegrity && <p className={importIntegrity.valid ? "integrity-ok" : "integrity-bad"} role="status">{importIntegrity.valid ? "IMPORTED RECEIPT: INTEGRITY VALID" : "IMPORTED RECEIPT: INVALID"} · {importIntegrity.reason}</p>}
+                {importIntegrity && <p className={importIntegrity.valid ? "integrity-ok" : "integrity-bad"} role="status">{importIntegrity.valid ? "IMPORTED RECEIPT: INTEGRITY VALID" : "IMPORTED RECEIPT: INVALID"} · {importIntegrity.reason}{importIntegrity.valid && importIntegrity.modules ? " · " + importIntegrity.modules + " modules" : ""}</p>}
                 {receiptNotice && <p className="integrity-bad" role="status">{receiptNotice}</p>}
                 <p className="integrity-caution">An internally valid hash is not a signature, trusted timestamp or proof of execution. Anyone can generate a new self-consistent receipt.</p>
               </div>
             </div>
           </div>
-          <p className="playground-warning">R4 adds local module imports and exports, while keeping isolated worker execution. R2 receipt export is disabled for programs using local modules because the old hash format does not bind module code. Execute only trusted code.</p>
+          <p className="playground-warning">R5 SHA-256 v2 receipts include full local module sources, while older standalone v1 receipts still verify. These hashes detect un-rehashed changes, NOT authorship or execution. Browser Workers are not OS sandboxes. Execute only trusted code.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
             <p className="eyebrow">FIELD NOTES / QUICK REFERENCE</p>
             <h2>A language with<br /><em>room to grow.</em></h2>
-            <p>Define functions in local .phi libraries and use import moduleName to access exported symbols. Save each library and its manifest for CLI use. Receipts cannot yet authenticate library contents.</p>
+            <p>Define reusable .phi libraries with import/export, run them in the browser, and generate source-complete PhiPack v2 integrity receipts. Neither receipt version authenticates who ran the code.</p>
             <a href="https://github.com/MichaelWave369/Phithon/blob/main/docs/LANGUAGE.md" target="_blank" rel="noreferrer" className="reference-link">Read the language specification ↗</a>
           </div>
           <div className="reference-table">
@@ -423,7 +421,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.5.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.6.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>
