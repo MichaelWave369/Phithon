@@ -174,3 +174,7 @@ Vibe is a distinct intent-first compiler, not PhiThon or Vibe's own PhiPython gu
 ## R14: Full original Vibe proof obligation inventory
 
 `vibe-full-obligations <full.vibe.proof.json> <proof-brief.json> <correspondence.json> <link.json> <intent-brief.json> <contract.vibe> <implementation.phi> <behavior-report.json> <property-report.json> <bindings.json> --out <complete-ledger.json>` imports Vibe's **original** proof artifact v1 (up to 512 obligations/2 MiB), validates it against the separate short Phase 8.4 brief's first-ten projection, count, hashes and reported result. It extends R13's source-linked operator association mapping to all imported obligation IDs without copying descriptions/private paths or turning claims into verified correctness. [Full proof guide](VIBE-FULL-PROOF.md).
+
+## R15: Ed25519 local evidence custody
+
+The Node CLI-only `vibe-custody-sign <full.vibe.proof.json> <proof-brief.json> <contract.vibe> <private.pem> --out <custody.json> --confirm-sign` explicitly signs a domain-separated SHA-256 digest pair for exact original source/proof bytes with Ed25519. The verifier `vibe-custody-check <custody.json> <full.vibe.proof.json> <proof-brief.json> <contract.vibe> <public.pem>` cross-checks the full Vibe proof with the brief, recomputes both source/proof hashes, checks the separately supplied Ed25519 public key SPKI fingerprint and verifies the signature. It does not execute either programming language, attest the Vibe compiler run, establish signer identity, or prove PhiThon semantics. [R15 key custody guide](VIBE-CUSTODY.md).
