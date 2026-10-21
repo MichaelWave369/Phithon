@@ -1,0 +1,9 @@
+# PhiBrain R6 example. Permission denied unless the host grants it.
+# CLI: npm run phi -- --brain-out requests.json examples/brain.phi
+# Browser: load the PhiBrain Bridge example and check permission for next Run.
+# This does NOT call a model or contact SPV.
+use brain
+
+let id = brain_request("spv", "Suggest 3 test cases for a PhiThon module.")
+print("Staged request:", id)
+print("No model call was made. Export the NOT_SENT JSON manually.")

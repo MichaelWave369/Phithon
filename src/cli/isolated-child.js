@@ -36,6 +36,7 @@ try {
   }
   const { source, mode, options } = request;
   const modules = request.modules ?? {};
+  const brainGrant = request.brainGrant === true;
   validateModuleRegistry(modules);
   if (typeof source !== "string" || source.length > 100_000) {
     throw new TypeError("PhiShield: invalid source");
@@ -52,7 +53,7 @@ try {
     const maxOutputChars = Number.isInteger(options?.maxOutputChars) && options.maxOutputChars > 0
       ? Math.min(options.maxOutputChars, 12_000) : 12_000;
     analyzePackage(source, modules);
-    send({ ok: true, value: execute(source, { maxSteps, maxOutputChars, modules }) });
+    send({ ok: true, value: execute(source, { maxSteps, maxOutputChars, modules, brainGrant }) });
   } else {
     throw new TypeError("PhiShield: unsupported child mode");
   }

@@ -2,7 +2,17 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R5 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R6 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R6: Permission-controlled PhiBrain request handoff
+
+`use brain` adds `brain_request(route, prompt)`, but staging is **denied by default**. A host must explicitly grant `brain.requests` for an individual run. Requests are limited to five prompts (2,048 characters each) and must use the intent labels `manual`, `local`, or `spv`.
+
+```sh
+npm run phi -- --brain-out requests.json examples/brain.phi
+```
+
+The CLI flag grants request staging for that run and writes a JSON envelope marked **NOT_SENT**. In the playground, the per-run checkbox enables staging, and a separate click exports a file. **This is not a live SPV or AI model connection:** no network, model access, token, endpoint, or implicit dispatch is included. Staged prompts are logged as `SIMULATED` events that can be SHA-256-bound into receipts. See [PhiBrain protocol, privacy and security](docs/PHIBRAIN.md).
 
 ## R5: Source-complete PhiLedger v2 receipts
 
@@ -114,7 +124,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0, R1, R2, R3, R4 and R5
+## Shipped in R0, R1, R2, R3, R4, R5 and R6
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -127,6 +137,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R3 fixed-command child runner with deadline, bounded pipes, and nonexecuting syntax checking
 - R4 local import/export modules, manifest loader, circular dependency checks, and browser library editor
 - R5 module-complete SHA-256 receipts, legacy verification and current-project comparison
+- R6 explicit per-run PhiBrain permission and manual NOT_SENT request export (no AI dispatch)
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -146,7 +157,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R6: richer syntax, better package tooling and stronger OS-level confinement.
+R7: explicitly reviewed SPV/Ollama adapter, scoped network grants, richer syntax and stronger OS-level confinement.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 

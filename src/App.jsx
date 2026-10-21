@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { runInWorker } from "./language/runner.js";
 import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
+import { makeBrainHandoff } from "./brain/handoff.js";
 
 const EXAMPLES = [
   { title: "Welcome, Field", label: "Hello World", code: [
@@ -64,6 +65,14 @@ const EXAMPLES = [
     'print("Neighbors of 0 =", nbg_neighbors(6, 0))',
     'ledger("TOY_GRAPH", "illustrative")'
   ].join("\n") },
+  { title: "PhiBrain Bridge", label: "R6 · Requests", code: [
+    "# An inert handoff request, not an AI model call",
+    "# Turn on the permission checkbox before Run",
+    "use brain",
+    'let ticket = brain_request("spv", "Summarize three test cases for my PhiThon module.")',
+    'print("Queued handoff request:", ticket)',
+    'print("No model or network was contacted.")'
+  ].join("\n") },
   { title: "Library Workshop", label: "R4 · PhiPack", code: [
     "# Two reusable local modules",
     "import geometry",
@@ -95,7 +104,8 @@ const BUILTINS = [
   ["ledger(event, value)", "Simulated memory receipt"],
   ["use math", "Optional numeric standard library"],
   ["use nbg", "Optional toy cycle graph functions"],
-  ["import name", "Import exports from a local .phi module"]
+  ["import name", "Import exports from a local .phi module"],
+  ["use brain", "Capability-gated offline request handoff"]
 ];
 
 export default function App() {
@@ -103,6 +113,8 @@ export default function App() {
   const [code, setCode] = useState(EXAMPLES[0].code);
   const [modules, setModules] = useState(EXAMPLES[0].modules ?? {});
   const [selectedModule, setSelectedModule] = useState("");
+  const [brainGrant, setBrainGrant] = useState(false);
+  const [brainRequests, setBrainRequests] = useState([]);
   const [output, setOutput] = useState(["Welcome to PhiThon R1.", "Press Run program to execute your .phi code."]);
   const [receipts, setReceipts] = useState([]);
   const [status, setStatus] = useState("ready");
@@ -124,6 +136,8 @@ export default function App() {
     setCode(EXAMPLES[i].code);
     setModules(EXAMPLES[i].modules ?? {});
     setSelectedModule(Object.keys(EXAMPLES[i].modules ?? {})[0] ?? "");
+    setBrainGrant(false);
+    setBrainRequests([]);
     setOutput(["Example loaded. Ready to run."]);
     setReceipts([]);
     setStatus("ready");
@@ -141,6 +155,9 @@ export default function App() {
     const request = ++requestRef.current;
     const source = code;
     const library = { ...modules };
+    const granted = brainGrant === true;
+    setBrainGrant(false); // Consent must be actively granted again on every run.
+    setBrainRequests([]);
     setStatus("running");
     setOutput(["Running in dedicated worker..."]);
     setReceipts([]);
@@ -155,11 +172,13 @@ export default function App() {
         timeoutMs: 2500,
         maxSteps: 30000,
         maxOutputChars: 12000,
-        modules: library
+        modules: library,
+        brainGrant: granted
       });
       if (request !== requestRef.current) return;
       setOutput(data.output.length ? data.output : ["Program finished without printed output."]);
       setReceipts(data.ledger);
+      setBrainRequests(data.brainRequests ?? []);
       setSteps(data.steps);
       setResult(data.result);
       setStatus("ok");
@@ -182,6 +201,7 @@ export default function App() {
       if (request !== requestRef.current || controller.signal.aborted) return;
       setOutput([err instanceof Error ? err.message : String(err)]);
       setReceipts([]);
+      setBrainRequests([]);
       setSteps(null);
       setResult(null);
       setReceipt(null);
@@ -198,6 +218,7 @@ export default function App() {
     controllerRef.current = null;
     setStatus("cancelled");
     setOutput(["Execution cancelled. Worker terminated."]);
+    setBrainRequests([]);
     setReceipts([]);
     setSteps(null);
     setResult(null);
@@ -215,6 +236,11 @@ export default function App() {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function exportBrainHandoff() {
+    if (!brainRequests.length) return;
+    const handoff = makeBrainHandoff(brainRequests);
+    downloadText("phibrain.handoff.json", JSON.stringify(handoff, null, 2) + "\n", "application/json");
   }
   function exportReceipt() {
     if (!receipt) return;
@@ -281,12 +307,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R5 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R6 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE FIVE</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE SIX</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -300,7 +326,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.6 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.7 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -330,7 +356,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R5</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R6</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -339,6 +365,21 @@ export default function App() {
                 {status === "running" && <button type="button" className="cancel-button" onClick={cancelProgram}>■ Stop</button>}
                 <button type="button" className="plain-button" onClick={savePhiFile}>↓ Save .phi</button>
                 <span className="size-readout">{code.split("\n").length} LINES</span>
+              </div>
+              <div className="brain-workbench">
+                <div className="brain-workbench-title">ΦBRAIN / EXPLICIT HANDOFF</div>
+                <label className="brain-checkbox">
+                  <input type="checkbox" checked={brainGrant} onChange={e => setBrainGrant(e.target.checked)} />
+                  <span>Grant brain.requests permission for next Run only</span>
+                </label>
+                <p className="brain-hint">No model calls or networking. Permission allows a program to queue up to five inert prompt requests. A human must explicitly export and hand them off.</p>
+                {brainRequests.length > 0 && (
+                  <div className="brain-result">
+                    <span>{brainRequests.length} request(s) queued · NOT SENT</span>
+                    <button type="button" className="plain-button" onClick={exportBrainHandoff}>↓ Export handoff JSON</button>
+                    <p className="brain-hint">Routes are intentions only: manual, local, spv. Nothing has been delivered to SPV or any model.</p>
+                  </div>
+                )}
               </div>
               <div className="library-workbench">
                 <div className="library-heading"><strong>ΦPACK / LOCAL MODULES</strong><button type="button" className="module-add" onClick={addModule} disabled={Object.keys(modules).length >= 32}>+ Module</button></div>
@@ -406,7 +447,7 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="playground-warning">R5 SHA-256 v2 receipts include full local module sources, while older standalone v1 receipts still verify. These hashes detect un-rehashed changes, NOT authorship or execution. Browser Workers are not OS sandboxes. Execute only trusted code.</p>
+          <p className="playground-warning">R6 PhiBrain builds optional NOT_SENT request handoffs only after an explicit per-run grant. No request is dispatched to a model, browser network or SPV. SHA-256 receipt events remain SIMULATED. Execute only trusted code.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
@@ -421,7 +462,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.6.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.7.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>

@@ -65,3 +65,14 @@ h1,h2{font-family:"Space Grotesk",sans-serif;margin:0;letter-spacing:-3px}h1{fon
 .module-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .module-actions .plain-button{padding:9px;font-size:10px}
 @media(max-width:720px){.library-workbench{padding:14px}.module-editor{min-height:165px}}
+
+
+/* R6 PhiBrain consent and inert request export */
+.brain-workbench{border-top:1px solid #314e50;background:#13232b;padding:16px 20px}
+.brain-workbench-title{font:10px "DM Mono",monospace;letter-spacing:1.2px;color:#ade8d3;margin-bottom:11px}
+.brain-checkbox{display:flex;align-items:center;gap:10px;font:12px/1.5 "DM Mono",monospace;color:#e2f5e9;cursor:pointer}
+.brain-checkbox input{width:17px;height:17px;accent-color:#68d7ac;flex-shrink:0}
+.brain-hint{font-size:10px;line-height:1.7;color:#9aafbb;margin:9px 0 0}
+.brain-result{margin-top:14px;padding:12px;border:1px solid #416555;border-radius:4px;font:11px "DM Mono",monospace;color:#addcbd;background:#192f30}
+.brain-result .plain-button{margin-top:10px}
+@media(max-width:720px){.brain-workbench{padding:14px}}
