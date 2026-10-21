@@ -52,7 +52,7 @@ while (n > 0) {
 
 ## Execution and safety
 
-The R0 interpreter deliberately does **not** expose `eval`, imports, host objects, filesystem APIs, shell commands, or networking to PhiThon programs. It includes source, token, step, recursion, output, and some value-size limits. This makes it useful for experiments and teaching but **not** a hardened security boundary for arbitrary hostile input. The browser demo runs on the main thread, not in a sandboxed process or Worker. Run only code you trust until isolation is implemented and audited.
+The PhiThon interpreter does **not** expose JavaScript `eval`, arbitrary module loading, host objects, filesystem APIs, shell commands or networking to PhiThon programs. It has a small built-in allowlist of opt-in modules. The interpreter implements source, token, step, recursion, output and selected size limits. The browser uses a killable Web Worker with a wall-clock deadline; the CLI does not yet have process isolation. Neither mode is a hardened boundary for untrusted hostile programs.
 
 ## Command line
 
@@ -62,16 +62,16 @@ npm run phi -- examples/hello.phi
 npm run phi
 ```
 
-The R0 REPL reads a single line per program and does **not** preserve variable state across lines.
+The R1 CLI REPL reads a single line per program and does **not** preserve variable state across lines.
 
 ## Planned, NOT implemented
 
-- Indentation-based Python-like syntax and richer standard library
-- Type checker, modules, imports and packaging
-- Web Worker and/or isolated subprocess execution
-- Capability grants for selected adapters
-- Versioned, signed Ledger integration, SPV AI adapters, NBG modules
-- Compatibility tooling for Python, rather than claiming Python syntax support
+- Indentation-based Python-like syntax, rich modules and package manager
+- Type checking and tooling
+- Isolated operating-system subprocess execution for the CLI
+- Capability-granted external adapters
+- Versioned, signed Ledger integration, SPV AI adapters and research-grade NBG implementation
+- Compatibility tooling for Python
 
 
 ## R1: Opt-in modules
