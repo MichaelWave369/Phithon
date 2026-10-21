@@ -1,4 +1,4 @@
-# PhiLedger R2: SHA-256 integrity receipts
+# PhiLedger R2/R5: SHA-256 integrity receipts
 
 PhiLedger R2 produces a **portable, self-consistent SHA-256 record** of a PhiThon program, its output, its execution step count, and its simulated ledger events. It can be checked independently of the originating browser tab.
 
@@ -70,3 +70,28 @@ Original `ledger(event, value)` events remain **SIMULATED**. R2 wraps the *claim
 | Browser WebCrypto is unavailable | Receipt hashing fails clearly, execution output remains available |
 
 Potential future work: authenticated signed receipts, independent digests, source replay, secure isolated execution and provenance identity. None is part of R2.
+
+## R5 receipt format: phithon.execution-receipt.v2
+
+R2's original v1 format is unchanged for standalone programs. R5 adds v2 for local PhiPack programs, including **the full, exact source text for every declared module** (even unused modules). Both formats are accepted by `verifyReceipt`; the CLI and browser select v2 when the module registry is nonempty.
+
+R5's v2 top-level keys are the v1 keys plus `modules`, `moduleHashes`, and `moduleSetHash`, and it changes `schema` to `phithon.execution-receipt.v2`. Each v2 receipt also has v2-specific genesis and event-chain hashes.
+
+- `modules` is an object mapping module names to exact `.phi` text; at most 32 modules and 200,000 source characters.
+- `moduleHashes[name] = SHA256(UTF8(modules[name]))` for each module, using a sorted canonical JSON object.
+- `moduleSetHash = SHA256(canonical(moduleHashes))`.
+- The v2 genesis header is `{schema,algorithm,createdAt,sourceHash,moduleSetHash,execution}`. The SHA-256 genesis and each event hash follow v1's canonical event link procedure.
+- `receiptHash` covers the entire v2 body including **module source bytes and hashes**.
+- v2 verification validates the local package dependency graph by parsing source. It **does not execute** imported modules or the main PhiThon program.
+
+### Compare against the current files
+
+```sh
+npm run phi -- --receipt examples/packages/main.phi
+npm run phi -- verify examples/packages/main.phi.receipt.json
+npm run phi -- verify-project examples/packages/main.phi.receipt.json examples/packages/main.phi
+```
+
+`verify` confirms that saved receipt JSON is internally consistent. It does NOT check whether files on disk have since changed. `verify-project` separately loads the entry `.phi` and adjacent manifest modules and compares all original source strings. It fails if the project files no longer match, without executing any PhiThon program.
+
+**Threat model remains unchanged:** a forged document that is completely rehashed can verify. v2 offers source completeness, NOT signer identity, trusted timestamps, proof that output was genuinely executed, or OS-level sandboxing. The event provenance still says `SIMULATED`.

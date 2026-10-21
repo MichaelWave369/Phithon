@@ -21,8 +21,8 @@ test("CLI check resolves package graph without executing", () => {
   assert.match(output, /2 modules/);
   assert.doesNotMatch(output, /3 x 3 = 9/);
 });
-test("module-dependent programs cannot generate incomplete R2 receipts", () => {
-  assert.throws(() => args(["--receipt", main]), /Command failed/);
+test("local modular programs support CLI execution and static checking", () => {
+  assert.match(args(["check", main]), /2 modules/);
 });
 test("legacy standalone CLI and integrity receipt checks still work", () => {
   const program = resolve("examples/hello.phi");

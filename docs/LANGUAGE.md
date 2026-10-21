@@ -48,7 +48,7 @@ while (n > 0) {
 | `range(n)` | Array of integers 0..n-1 (max 1000) |
 | `ledger(event, value)` | In-memory demo event with SIMULATED provenance |
 
-`ledger` is not cryptographically signed, persisted, or tamper-evident. Real verifiable receipts are future work.
+`ledger()` events are in-memory and SIMULATED. Separately, CLI and browser can generate real SHA-256 integrity receipts for execution transcripts, including R5 module sources. These receipts are not signed and cannot authenticate a run.
 
 ## Execution and safety
 
@@ -133,4 +133,8 @@ Use `import numbers` to load explicitly registered `.phi` module source. A modul
 
 The CLI reads a local `phithon.pack.json` adjacent to the entry program, which maps names to same-directory `.phi` files. In-browser files come from the editable Library Workshop. Imports are lexical, checked for cycles and missing dependencies, and do not make filesystem or network APIs available inside PhiThon.
 
-R4 `--receipt` is deliberately disabled for programs accompanied by package modules because the R2 receipt schema does not hash their source. Refer to [PhiPack](PHIPACK.md) for the manifest specification, limitations and security model.
+R4 originally blocked incomplete package receipts. R5 now enables versioned v2 source-complete module receipts. Refer to [PhiPack](PHIPACK.md) and [PhiLedger](LEDGER.md) for the format, checks and security limitations.
+
+## R5: Module receipts
+
+`--receipt` chooses the v2 schema for packages with local modules and v1 for standalone programs. `verify` checks both formats without running code. `verify-project` additionally compares the receipt's source snapshot with current `.phi` source and local package files. SHA-256 checksums cannot prove who created the receipt, when it was produced, or whether the program truly executed.
