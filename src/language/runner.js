@@ -8,7 +8,7 @@
  */
 export function runInWorker(
   source,
-  { signal, timeoutMs = 2500, maxSteps = 30000, maxOutputChars = 12000, workerFactory } = {}
+  { signal, timeoutMs = 2500, maxSteps = 30000, maxOutputChars = 12000, modules = {}, workerFactory } = {}
 ) {
   if (typeof source !== "string") return Promise.reject(new TypeError("PhiThon source must be text"));
   if (signal?.aborted) return Promise.reject(abortError());
@@ -62,7 +62,7 @@ export function runInWorker(
       close(new Error(event.message ?? "Worker execution failed"));
     };
     if (signal?.aborted) { onAbort(); return; }
-    try { worker.postMessage({ source, options: { maxSteps, maxOutputChars } }); }
+    try { worker.postMessage({ source, options: { maxSteps, maxOutputChars, modules } }); }
     catch (error) { close(error); }
   });
 }
