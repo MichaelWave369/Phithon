@@ -1,0 +1,15 @@
+# Independent Vibe intent declaration; expectations are reviewed manually.
+intent PhiDouble:
+  goal: "Double one input number deterministically."
+  inputs:
+    x: number
+  outputs:
+    doubled: number
+
+preserve:
+  deterministic_contract_shape >= 1
+
+constraint:
+  no network side effects
+
+emit python

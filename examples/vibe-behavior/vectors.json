@@ -1,0 +1,36 @@
+{
+  "schema": "phithon.vibe-behavior-vectors.v1",
+  "intentName": "PhiDouble",
+  "entryFunction": "evaluate",
+  "provenance": "OPERATOR_SELECTED_EXPECTATIONS_UNATTESTED",
+  "cases": [
+    {
+      "id": "zero",
+      "inputs": [
+        0
+      ],
+      "expectedOutput": "0"
+    },
+    {
+      "id": "one",
+      "inputs": [
+        1
+      ],
+      "expectedOutput": "2"
+    },
+    {
+      "id": "positive",
+      "inputs": [
+        21
+      ],
+      "expectedOutput": "42"
+    },
+    {
+      "id": "negative",
+      "inputs": [
+        -3
+      ],
+      "expectedOutput": "-6"
+    }
+  ]
+}

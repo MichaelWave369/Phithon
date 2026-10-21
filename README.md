@@ -2,7 +2,17 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R10 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R11 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R11: Reviewed behavior vectors with real PhiShield execution
+
+PhiThon can now test **selected, human-authored behavior examples** against the same `.vibe` intent and `.phi` source linked by R9. The CLI validates the source hash link first, then runs each vector in a separate bounded PhiShield child with **no AI/model permissions**.
+
+```sh
+npm run phi -- vibe-behavior source-link.json intent-brief.json examples/vibe-behavior/contract.vibe examples/vibe-behavior/implementation.phi examples/vibe-behavior/vectors.json --out behavior-report.json
+```
+
+The report distinguishes exact single-output **MATCH**, **MISMATCH** and **ERROR**, with digests rather than raw input/output values. All selected cases must match for a zero exit code. **This is not full Vibe-to-PhiThon equivalence**, independent attestation or an exhaustive Vibe preservation proof. [Full R11 workflow, constraints and threat model](docs/VIBE-BEHAVIOR.md).
 
 ## R10: Source-bound Vibe proof-report correspondence
 
@@ -177,7 +187,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0 through R10
+## Shipped in R0 through R11
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -195,6 +205,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R8 strict, read-only SPV portable Evidence Bench v0.1 import with provenance-safe summaries
 - R9 Vibe Phase 8.4 intent brief import and hash-bound declared PhiThon implementation links
 - R10 separately imported Vibe proof-brief self-reports, hash-correspondence and no automatic authority promotion
+- R11 selected behavioral test vectors executed in bounded PhiShield children with tamper-detecting SHA-256 result records
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -214,7 +225,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R11: reviewed behavioral test vectors for Vibe/PhiThon, separately reviewed live SPV API if one exists, and stronger OS-level confinement.
+R12: wider behavioral contract coverage and independently reviewed Vibe obligations, separately reviewed live SPV API if one exists, and stronger OS-level confinement.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
