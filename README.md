@@ -2,7 +2,18 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R14 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R15 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R15: Offline Ed25519 custody signatures for original Vibe proofs
+
+PhiThon now supports **explicit local signing** and **out-of-band public-key verification** of the original Vibe `.vibe.proof.json` and the exact `.vibe` source bytes. It cross-checks original proof v1 against Vibe's Phase 8.4 compact brief before signing or verifying, and stores only signed source/proof hashes plus a public-key fingerprint.
+
+```sh
+npm run phi -- vibe-custody-sign original.vibe.proof.json proof-brief.json contract.vibe private.pem --out custody.json --confirm-sign
+npm run phi -- vibe-custody-check custody.json original.vibe.proof.json proof-brief.json contract.vibe public.pem
+```
+
+Private key handling stays local and signing never happens automatically. A valid Ed25519 signature verifies **custody of supplied bytes by a key**, not that Vibe ran, that the signer is trusted or that PhiThon implements the entire intent. [R15 custody guide and key-handling warnings](docs/VIBE-CUSTODY.md).
 
 ## R14: Full Vibe v1 proof obligation inventory
 
@@ -219,7 +230,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0 through R14
+## Shipped in R0 through R15
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -257,7 +268,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R15: reviewed original Vibe artifact attestation options, stronger OS-level isolation and safely scoped protocol bridges only after contracts are verified.
+R16: independent key-trust registries and replayable Vibe verifier evidence only with pinned toolchains; stronger OS-level isolation and carefully scoped protocols.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
