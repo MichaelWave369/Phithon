@@ -83,3 +83,49 @@ The `vibe-link-check` command recomputes all source hashes and compares all decl
 5. **Only then:** Independently qualified cross-language preservation reports, explicit approvals, and reproducible benchmarks.
 
 **Ledger above ego:** Vibe defines intended obligations; PhiThon may implement them. Their names, hashes and proximity do not make that relationship true without actual evidence.
+
+
+## R10: Vibe proof-report correspondence
+
+R10 adds a **second, independent artifact**, based on Vibe's own
+[Phase 8.4 build_proof_brief](https://github.com/MichaelWave369/Vibe/blob/main/vibe/interchange.py)
+function and
+[Vibe's proof artifact builder](https://github.com/MichaelWave369/Vibe/blob/main/vibe/proof.py).
+
+The Vibe proof brief schema is `phase-8.4.proof-brief.v1`. It includes:
+- `intent_summary.source_hash`: SHA-256 of the original .vibe source as reported by Vibe.
+- `verification_backend` and `result.passed`: the **reported** backend and pass/fail status.
+- `preserve_constraint_summary`, `bridge_result`, and `equivalence_drift_summary`: bounded descriptions of Vibe's own reported analyses.
+- `interchange_metadata`: flags confirming this document is a deterministic projection **of an earlier Vibe proof artifact**, not an independently authenticated witness.
+
+You must first generate a Vibe proof artifact using Vibe itself, then export the brief:
+
+~~~sh
+# In your separately installed Vibe toolchain:
+vibec verify-proof examples/vibe-contract/hello.vibe
+vibec proof-brief examples/vibe-contract/hello.vibe.proof.json --report json --write-output proof-brief.json
+
+# In PhiThon:
+npm run phi -- vibe-proof-inspect proof-brief.json
+
+npm run phi -- vibe-proof-link vibe-phi-link.json proof-brief.json intent-brief.json examples/vibe-contract/hello.vibe examples/vibe-contract/hello.phi --out proof-correspondence.json
+
+npm run phi -- vibe-proof-link-check proof-correspondence.json vibe-phi-link.json proof-brief.json intent-brief.json examples/vibe-contract/hello.vibe examples/vibe-contract/hello.phi
+~~~
+
+The CLI re-checks the R9 link against **actual .vibe, .phi and declared PhiPack files**, then confirms that the proof brief reports the **same Vibe source hash**. It records a second source-linked file with `phithon.vibe-proof-correspondence.v1` schema, including a SHA-256 of the supplied proof brief and original R9 link. The file is exclusively created and cannot silently overwrite another report.
+
+**Critical limit:** a proof brief could be forged in text. Even when it says Vibe passed, R10 does **not** re-run `vibec`, authenticate a signed proof, independently validate the proof artifact, or verify that .phi executes the intended contract. It merely links the imported **reported** Vibe outcome to sources whose current bytes match the original declaration.
+
+The browser has a separate, local-only Vibe proof-brief reader. It displays `VIBE REPORTED PASS` or `VIBE REPORTED FAIL`, not `PHITHON CERTIFIED` or an automatic approval. No raw proof artifact, private path, untrusted obligations text, or hidden keys are retained in the read-only summary.
+
+The following claims are **always false** in the R10 correspondence, regardless of a reported pass:
+- original Vibe proof artifact cryptographically authenticated;
+- actual invocation of Vibe verifier independently attested;
+- cross-language PhiThon equivalence verified;
+- PhiThon executed or its output independently observed;
+- SPV model selection, routing, ledger authority or training promotion approved.
+
+For real cross-language behavioral verification, the next step is separately reviewed **explicit test vectors**, fixed inputs/outputs and Vibe preservation obligations, plus reproducible PhiThon execution receipts linked to those tests. A source-hash match alone is not a behavior match.
+
+**Ledger above ego: reported outcomes are not automatically verified facts.**

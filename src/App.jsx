@@ -4,6 +4,7 @@ import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/rec
 import { makeBrainHandoff } from "./brain/handoff.js";
 import { inspectSpvBenchJson, SPV_BENCH_MAX_BYTES } from "./bridge/spv-evidence.js";
 import { inspectVibeBriefJson, MAX_VIBE_BRIEF_BYTES } from "./bridge/vibe-intent.js";
+import { inspectVibeProofBriefJson, MAX_VIBE_PROOF_BRIEF_BYTES } from "./bridge/vibe-proof.js";
 
 const EXAMPLES = [
   { title: "Welcome, Field", label: "Hello World", code: [
@@ -132,6 +133,8 @@ export default function App() {
   const [spvInspectionError, setSpvInspectionError] = useState("");
   const [vibeInspection, setVibeInspection] = useState(null);
   const [vibeInspectionError, setVibeInspectionError] = useState("");
+  const [vibeProofInspection, setVibeProofInspection] = useState(null);
+  const [vibeProofError, setVibeProofError] = useState("");
   useEffect(() => () => controllerRef.current?.abort(), []);
 
   function loadExample(i) {
@@ -242,6 +245,27 @@ export default function App() {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  async function importVibeProofBrief(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    setVibeProofInspection(null);
+    setVibeProofError("");
+    if (!file) return;
+    if (file.size > MAX_VIBE_PROOF_BRIEF_BYTES) {
+      setVibeProofError("PhiVibe proof: input exceeds 64 KiB");
+      return;
+    }
+    try {
+      const report = inspectVibeProofBriefJson(await file.text());
+      setVibeProofInspection(report);
+    } catch (error) {
+      setVibeProofError(error instanceof Error ? error.message : String(error));
+    }
+  }
+  function clearVibeProofBrief() {
+    setVibeProofInspection(null);
+    setVibeProofError("");
   }
   async function importVibeBrief(event) {
     const file = event.target.files?.[0];
@@ -357,12 +381,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R9 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R10 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE NINE</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE TEN</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -376,7 +400,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.10 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.11 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -406,7 +430,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R9</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R10</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -493,6 +517,21 @@ export default function App() {
                   <p className="spv-bench-hint">For an actual hash-bound implementation link, use the CLI <code>vibe-link</code> with the original .vibe source and the .phi source. This browser view cannot certify either.</p>
                 </div>}
               </div>
+              <div className="vibe-bridge-panel">
+                <div className="receipt-heading"><span>◇ ΦVIBE / PROOF CORRESPONDENCE</span><span>SELF-REPORTED</span></div>
+                <p className="spv-bench-hint">Use <code>vibec proof-brief saved.vibe.proof.json --report json</code> to create Vibe's existing Phase 8.4 proof brief. Import it for an offline inspection of reported Vibe outcomes. This does not authenticate Vibe, certify PhiThon, or grant authority.</p>
+                <div className="integrity-actions">
+                  <label className="plain-button upload-label">↑ Inspect Vibe proof brief<input type="file" accept=".json,application/json" onChange={importVibeProofBrief} aria-label="Select Vibe Phase 8.4 proof brief JSON for offline inspection" /></label>
+                  <button type="button" className="plain-button" onClick={clearVibeProofBrief} disabled={!vibeProofInspection && !vibeProofError}>Clear proof view</button>
+                </div>
+                {vibeProofError && <p className="integrity-bad" role="status">{vibeProofError}</p>}
+                {vibeProofInspection && <div className="spv-evidence-results" role="status">
+                  <p className="spv-bench-hint"><strong>VIBE REPORTED: {vibeProofInspection.compilerPassReported ? "PASS" : "FAIL"}</strong> · SOURCE NOT AUTHENTICATED</p>
+                  <p className="spv-bench-hint">Backend claimed: {vibeProofInspection.backendReported} · {vibeProofInspection.obligationsTotalReported} reported obligations · {vibeProofInspection.obligationsSampled} sample entries</p>
+                  <p className="spv-bench-hint">Bridge verdict claimed: {vibeProofInspection.bridgeVerdictReported ?? "UNREPORTED"} · no equivalence proof or execution attestation</p>
+                  <p className="spv-bench-hint">To check this report against the actual .vibe and .phi sources, use the CLI <code>vibe-proof-link</code>. Imported pass flags are never promoted to PhiThon verification or permission.</p>
+                </div>}
+              </div>
               <div className="spv-bench-panel">
                 <div className="receipt-heading"><span>◇ ΦBRIDGE / SPV EVIDENCE</span><span>READ ONLY</span></div>
                 <p className="spv-bench-hint">Import a portable redacted Evidence Bench JSON exported from SuperPhiVessel's local console. This never runs a model, grants routing permission or uploads anything. Imported records are operator-selected and unauthenticated.</p>
@@ -533,7 +572,7 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="playground-warning">R9 adds Vibe intent-brief inspection and a CLI source-hash link to PhiThon implementations. Neither implies cross-language semantic preservation or proof of execution. SPV evidence remains offline/unattested and local Ollama dispatch remains separately consented.</p>
+          <p className="playground-warning">R10 adds offline Vibe proof-brief inspection and source-hash correspondence with an existing PhiThon/Vibe implementation link. Vibe pass/fail remains a self-reported claim, never PhiThon semantic verification, execution permission or SPV approval.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
@@ -548,7 +587,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.10.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.11.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>
