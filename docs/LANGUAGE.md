@@ -68,7 +68,7 @@ The R3 CLI REPL reads a single line per program and does **not** preserve variab
 
 - Indentation-based Python-like syntax, rich modules and package manager
 - Type checking and tooling
-- Isolated operating-system subprocess execution for the CLI
+- OS-level privilege confinement for CLI subprocesses
 - Capability-granted external adapters
 - Versioned, signed Ledger integration, SPV AI adapters and research-grade NBG implementation
 - Compatibility tooling for Python
@@ -120,7 +120,7 @@ Allowed n = 3..64. **These are intentionally limited elementary graph examples. 
 
 ### R1 browser execution
 
-The playground runs each program inside a disposable browser Web Worker, with a 2.5 second wall-clock deadline and an interactive Stop button. The synchronous interpreter and Node CLI still enforce step and recursion limits, but the Node CLI has no wall-clock kill mechanism. Neither the Worker nor the language is a security sandbox for untrusted adversarial code. Ledger events remain **SIMULATED**, ephemeral and unsigned.
+The playground runs each program inside a disposable browser Web Worker, with a 2.5 second wall-clock deadline and an interactive Stop button. The synchronous interpreter still enforces step and recursion limits. R3 adds a parent-enforced CLI child-process wall-clock deadline. Neither the Worker nor the language is a security sandbox for untrusted adversarial code. Ledger events remain **SIMULATED**, ephemeral and unsigned.
 
 
 ## R3 CLI and PhiShield
