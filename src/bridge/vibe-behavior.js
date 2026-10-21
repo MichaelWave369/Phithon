@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import { runIsolated } from "../cli/isolate.js";
 import { validateVibeBrief, verifyVibePhiLink } from "./vibe-intent.js";
 import { analyzePackage, validateModuleRegistry } from "../language/package.js";
+import { parse } from "../language/core.js";
 
 export const VIBE_VECTORS_SCHEMA = "phithon.vibe-behavior-vectors.v1";
 export const VIBE_BEHAVIOR_REPORT_SCHEMA = "phithon.vibe-behavior-report.v1";
@@ -103,6 +104,9 @@ export async function runVibeBehaviorVectors({
   const match = await verifyVibePhiLink(link, intentBrief, vibeSource, phiSource, modules);
   must(match.valid, "R9 source link mismatch: " + match.reason);
   analyzePackage(phiSource, modules);
+  const declared = parse(phiSource).filter(node => node.tag === "fn" && node.name === vectors.entryFunction);
+  must(declared.length === 1 && declared[0].params.length === intentBrief.intent.inputs.length,
+    "entryFunction must name one top-level PhiThon fn with Vibe input arity");
   must(typeof phiSource === "string" && phiSource.length <= 90_000,
     "entry source too large for isolated harness");
 
