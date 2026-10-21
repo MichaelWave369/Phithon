@@ -146,3 +146,7 @@ R4 originally blocked incomplete package receipts. R5 now enables versioned v2 s
 ## R7: Optional local Ollama dispatch
 
 PhiThon language programs still cannot call models themselves. On Node CLI only, a separately authorized `dispatch-local` command can consume a previously staged `NOT_SENT` handoff of route `local` and send exactly one selected prompt to the fixed loopback Ollama endpoint. It requires the exact `--confirm-local` flag and creates an exclusive response journal before dispatch. The returned model text is unverified data, not executable code or proof of identity. Neither the browser nor `spv`-routed requests can use this dispatch adapter. See [PhiBrain Ollama bridge](PHIBRAIN-OLLAMA.md).
+
+## R8: SPV Evidence Bench bridge
+
+The Node CLI `spv-bench-inspect <portable.json>` validates a manually selected, redacted SuperPhiVessel Portable Evidence Bench v0.1 JSON export. It prints provenance-limited descriptive counts and chronological performance observations, masking model names by default. The browser playground has a matching local file inspector. This **does not** grant model execution, change PhiBrain permissions, contact SPV, or promote claims to independently verified evidence. See [SPV Bridge](SPV-BRIDGE.md).
