@@ -376,7 +376,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">1.0 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.10 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -548,7 +548,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 1.0.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.10.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>
