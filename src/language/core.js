@@ -1,4 +1,5 @@
 import { installModule } from "./modules.js";
+import { BRAIN_ROUTES, MAX_BRAIN_REQUESTS, MAX_BRAIN_PROMPT } from "../brain/handoff.js";
 /**
  * PhiThon R0: independently implemented language, NOT Python-compatible.
  * No JS eval(), host objects, file/network APIs. Budgets are NOT a strong sandbox.
@@ -193,7 +194,8 @@ function buildPhiThon() {
     const ast = parse(src);
     const limit = (n, d, max) => Number.isInteger(n) && n > 0 ? Math.min(n, max) : d;
     const stepLimit = limit(opts.maxSteps, 30000, 500000), outLimit = limit(opts.maxOutputChars, 12000, 50000);
-    const output = [], ledger = [], root = new Scope();
+    const output = [], ledger = [], brainRequests = [], root = new Scope();
+    const brainGranted = opts.brainGrant === true;
     const moduleSources = opts.modules ?? {};
     if (!moduleSources || typeof moduleSources !== "object" || Array.isArray(moduleSources)) {
       throw new PhiError("Module registry must be a named source map");
@@ -350,7 +352,41 @@ function buildPhiThon() {
           exportSink.set(n.declaration.name, env.get(n.declaration.name, n.at));
           return null;
         }
-        case "use": installModule(n.name, env, { PhiError, num, valid }, n.at); return null;
+        case "use": {
+          if (n.name === "brain") {
+            // This lexical builtin can stage inert request data only. The host
+            // must explicitly grant it for this execution. No network calls.
+            env.define("brain_request", {
+              tag: "builtin", name: "brain_request", min: 2, max: 2,
+              f: ([route, prompt], at) => {
+                if (!brainGranted) throw new PhiError("PhiBrain permission denied: brain.requests must be explicitly granted by host", at);
+                if (typeof route !== "string" || !BRAIN_ROUTES.includes(route)) {
+                  throw new PhiError("brain_request route must be manual, local or spv", at);
+                }
+                if (typeof prompt !== "string" || !prompt.trim() || prompt.length > MAX_BRAIN_PROMPT) {
+                  throw new PhiError("brain_request prompt must be 1..2048 characters", at);
+                }
+                if (brainRequests.length >= MAX_BRAIN_REQUESTS || ledger.length >= 1000) {
+                  throw new PhiError("PhiBrain request/ledger quota exceeded", at);
+                }
+                const request = { id: brainRequests.length + 1, route, prompt };
+                brainRequests.push(request);
+                // Include the *exact prompt* in the existing SHA-256-chained
+                // SIMULATED ledger for receipt completeness. Never mark SENT.
+                ledger.push({
+                  sequence: ledger.length + 1,
+                  event: "BRAIN_REQUEST",
+                  data: JSON.stringify(request),
+                  provenance: "SIMULATED"
+                });
+                return request.id;
+              }
+            }, n.at);
+            return null;
+          }
+          installModule(n.name, env, { PhiError, num, valid }, n.at);
+          return null;
+        }
         case "let": env.define(n.name, evalExpr(n.value, env), n.at); return null;
         case "assign": return env.set(n.name, evalExpr(n.value, env), n.at);
         case "fn": env.define(n.name, { tag: "fn", name: n.name, params: n.params, body: n.body, env }, n.at); return null;
@@ -371,7 +407,10 @@ function buildPhiThon() {
     let result = null;
     try { for (const n of ast) result = runStatement(n, root); }
     catch (e) { if (e instanceof Returned) throw new PhiError("return outside function"); throw e; }
-    return { result: display(result), output, ledger, steps };
+    return {
+      result: display(result), output, ledger, steps,
+      ...(brainRequests.length ? { brainRequests } : {})
+    };
   }
   return { execute, parse, tokenize, PhiError };
 }
