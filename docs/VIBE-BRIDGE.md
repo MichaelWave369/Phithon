@@ -145,3 +145,7 @@ R13 reads the Phase 8.4 `obligations_sample` already included in Vibe's proof br
 ## R14 full original artifact
 
 The optional R14 `vibe-full-obligations` command accepts Vibe's original `.vibe.proof.json` v1 artifact and maps the complete obligation array, beyond Phase 8.4's compact first ten entries. It rechecks the short brief and R9–R12 source-linked input records; the full JSON is not uploaded, executed or included in the exported ledger. The original input is operator-selected and **UNATTESTED**. [R14 full proof workflow](VIBE-FULL-PROOF.md).
+
+## R15 offline custody signatures
+
+R15 adds two **Node CLI-only** commands: `vibe-custody-sign` and `vibe-custody-check`. They sign/verify a domain-separated Ed25519 envelope that binds original Vibe source and full-proof SHA-256 byte digests with a separately chosen public key. A valid signature proves **custody by the corresponding key holder only**; claims about compiler execution, real-world signer identity, PhiThon equivalence or model authority remain false. [Details and key safety](VIBE-CUSTODY.md).
