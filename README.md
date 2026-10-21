@@ -31,7 +31,7 @@ npm run phi -- verify examples/modules.phi.receipt.json
 
 ## R1: Optional modules and a cancellable playground
 
-The browser playground now runs PhiThon programs inside a dedicated **Web Worker**, with a cancel button and a hard wall-clock deadline. A Worker prevents the interpreter from freezing the editor and can be terminated. It is **not** a hardened security sandbox. The Node CLI still runs synchronously and needs process isolation before running untrusted programs.
+The browser playground now runs PhiThon programs inside a dedicated **Web Worker**, with a cancel button and a hard wall-clock deadline. A Worker prevents the interpreter from freezing the editor and can be terminated. It is **not** a hardened security sandbox. The Node CLI now uses a separate, deadline-limited child, but still needs true OS-level sandboxing before running untrusted programs.
 
 Import functionality explicitly with `use math` or `use nbg`. Modules are scoped, opt-in, and provide no shell, network or filesystem access. For example:
 
