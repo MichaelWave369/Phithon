@@ -1,0 +1,18 @@
+# Vibe intent declaration. Original intent-first language.
+# Generate an intent brief using Vibe CLI, not PhiThon's interpreter.
+intent PhiHello:
+  goal: "Print a deterministic greeting and small arithmetic result."
+  inputs:
+    person: string
+  outputs:
+    greeting: string
+    answer: number
+
+preserve:
+  deterministic_contract_shape >= 1
+
+constraint:
+  stable text output
+  avoid network side effects
+
+emit python
