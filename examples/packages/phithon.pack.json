@@ -1,0 +1,9 @@
+{
+  "schema": "phithon.package.v1",
+  "name": "phithon-example-kit",
+  "version": "0.1.0",
+  "modules": {
+    "numbers": "numbers.phi",
+    "geometry": "geometry.phi"
+  }
+}
