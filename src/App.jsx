@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { runInWorker } from "./language/runner.js";
 import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
 import { makeBrainHandoff } from "./brain/handoff.js";
+import { inspectSpvBenchJson, SPV_BENCH_MAX_BYTES } from "./bridge/spv-evidence.js";
 
 const EXAMPLES = [
   { title: "Welcome, Field", label: "Hello World", code: [
@@ -126,6 +127,8 @@ export default function App() {
   const [integrity, setIntegrity] = useState(null);
   const [importIntegrity, setImportIntegrity] = useState(null);
   const [receiptNotice, setReceiptNotice] = useState("");
+  const [spvInspection, setSpvInspection] = useState(null);
+  const [spvInspectionError, setSpvInspectionError] = useState("");
   useEffect(() => () => controllerRef.current?.abort(), []);
 
   function loadExample(i) {
@@ -237,6 +240,29 @@ export default function App() {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  async function importSpvBench(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    setSpvInspection(null);
+    setSpvInspectionError("");
+    if (!file) return;
+    if (file.size > SPV_BENCH_MAX_BYTES) {
+      setSpvInspectionError("SPV BENCH REFUSED: file exceeds 64 KiB");
+      return;
+    }
+    try {
+      const raw = await file.text();
+      const summary = inspectSpvBenchJson(raw);
+      // Store ONLY the sanitized summary, never the imported raw evidence JSON.
+      setSpvInspection(summary);
+    } catch (error) {
+      setSpvInspectionError("SPV BENCH REFUSED: " + (error instanceof Error ? error.message : String(error)));
+    }
+  }
+  function clearSpvBench() {
+    setSpvInspection(null);
+    setSpvInspectionError("");
+  }
   function exportBrainHandoff() {
     if (!brainRequests.length) return;
     const handoff = makeBrainHandoff(brainRequests);
@@ -307,12 +333,12 @@ export default function App() {
           <a href="#reference">Reference</a>
           <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
-        <span className="version-pill"><span className="live-dot" /> R7 · OPEN SOURCE</span>
+        <span className="version-pill"><span className="live-dot" /> R8 · OPEN SOURCE</span>
       </header>
       <main id="home">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE SEVEN</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTRODUCING Φ / RELEASE EIGHT</p>
             <h1>Code your <em>own</em><br />reality<span className="period">.</span></h1>
             <p className="hero-intro">A small, original programming language for curious minds. Write a little logic, bend some numbers, and watch it execute in your browser.</p>
             <div className="hero-actions">
@@ -326,7 +352,7 @@ export default function App() {
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
             <div className="phi-glyph">Φ</div>
-            <div className="orbit-caption caption-top">0.8 / FIELD ENGINE</div>
+            <div className="orbit-caption caption-top">0.9 / FIELD ENGINE</div>
             <div className="orbit-caption caption-bottom">LEDGER ABOVE EGO</div>
           </div>
         </section>
@@ -356,7 +382,7 @@ export default function App() {
             <div className="editor-column">
               <div className="panel-bar">
                 <div className="tab-label"><span className="file-icon">Φ</span> program.phi <span className="unsaved-dot" /></div>
-                <div className="editor-meta"><span>PHITHON R7</span><span>UTF-8</span></div>
+                <div className="editor-meta"><span>PHITHON R8</span><span>UTF-8</span></div>
               </div>
               <label className="sr-only" htmlFor="source-code">PhiThon source code</label>
               <textarea id="source-code" aria-label="PhiThon source code editor" spellCheck={false} className="code-editor" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onEditorKey} />
@@ -427,6 +453,26 @@ export default function App() {
                   </div>
                 ))}
               </div>
+              <div className="spv-bench-panel">
+                <div className="receipt-heading"><span>◇ ΦBRIDGE / SPV EVIDENCE</span><span>READ ONLY</span></div>
+                <p className="spv-bench-hint">Import a portable redacted Evidence Bench JSON exported from SuperPhiVessel's local console. This never runs a model, grants routing permission or uploads anything. Imported records are operator-selected and unauthenticated.</p>
+                <div className="integrity-actions">
+                  <label className="plain-button upload-label">↑ Inspect SPV bench JSON<input type="file" accept=".json,application/json" onChange={importSpvBench} aria-label="Select portable SuperPhiVessel Evidence Bench JSON for offline inspection" /></label>
+                  <button type="button" className="plain-button" onClick={clearSpvBench} disabled={!spvInspection && !spvInspectionError}>Clear inspection</button>
+                </div>
+                {spvInspectionError && <p className="integrity-bad" role="status">{spvInspectionError}</p>}
+                {spvInspection && <div className="spv-evidence-results" role="status">
+                  <p className="spv-bench-hint"><strong>VALID SHAPE · NOT VERIFIED EVIDENCE</strong> · {spvInspection.evidenceCount} entries, {spvInspection.performanceCount} performance, {spvInspection.humanReviewCount} self-reviews</p>
+                  <p className="spv-bench-hint">{spvInspection.modelLabelCount} distinct model labels · {spvInspection.performanceRowsWithMatchingReview} performance observations have a matching human review</p>
+                  <div className="spv-entries">{spvInspection.rows.map((item, i) => (
+                    <div className="spv-entry" key={i}>
+                      <span>#{i + 1} · {item.observedAt} · MODEL REDACTED</span>
+                      <small>{item.generatedTokens === null ? "Tokens unreported" : item.generatedTokens + " reported tokens"} · {item.matchingHumanReviewPresent ? "Matching self-review" : "No matching self-review"} · UNATTESTED</small>
+                    </div>
+                  ))}</div>
+                  <p className="spv-bench-hint">No ranking, quality approval, authority or live SPV connection. Imported claims remain unauthenticated.</p>
+                </div>}
+              </div>
               <div className="integrity-panel">
                 <div className="receipt-heading"><span>◇ PHILEDGER / SHA-256</span><span>{receipt ? "SEALED" : "NOT SEALED"}</span></div>
                 {receipt && (
@@ -447,7 +493,7 @@ export default function App() {
               </div>
             </div>
           </div>
-          <p className="playground-warning">R7 browser execution remains offline and exports NOT_SENT requests only. A separate, explicitly confirmed Node CLI command can send a single local-routed prompt to Ollama at 127.0.0.1:11434. SPV dispatch is not implemented. SHA-256 receipts do not prove model execution.</p>
+          <p className="playground-warning">R8 imports explicitly selected, redacted SPV Evidence Bench exports offline without dispatch, routing approval, or hidden networking. Local Ollama calls still require the separate confirmed Node CLI flow. Imported SPV records and SHA-256 receipts do not attest source truth.</p>
         </section>
         <section id="reference" className="reference-section">
           <div>
@@ -462,7 +508,7 @@ export default function App() {
         </section>
       </main>
       <footer className="site-footer">
-        <span><b>Φ</b> PhiThon / Version 0.8.0</span>
+        <span><b>Φ</b> PhiThon / Version 0.9.0</span>
         <span>ORIGINAL LANGUAGE · MIT LICENSE · LEDGER ABOVE EGO</span>
         <a href="https://github.com/MichaelWave369/Phithon" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
       </footer>
