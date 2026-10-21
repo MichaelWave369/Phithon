@@ -5,10 +5,11 @@ import { runIsolated } from "./cli/isolate.js";
 import { loadProjectModules } from "./cli/package-loader.js";
 import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
 import { makeBrainHandoff } from "./brain/handoff.js";
+import { inspectSpvBenchJson, SPV_BENCH_MAX_BYTES } from "./bridge/spv-evidence.js";
 import { validateLocalDispatch, makeDispatchJournal, dispatchAuthorizedLocal } from "./brain/dispatch-local.js";
 
 const HELP = [
-  "PhiThon R7 · The Language of the Field",
+  "PhiThon R8 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
@@ -20,6 +21,8 @@ const HELP = [
   "  npm run phi -- dispatch-local requests.json --model gemma3:12b --request 1 --out reply.json --confirm-local",
   "  npm run phi -- verify examples/modules.phi.receipt.json",
   "  npm run phi -- verify-project myprogram.phi.receipt.json myprogram.phi",
+  "  npm run phi -- spv-bench-inspect vessie-local-evidence-bench-portable.json",
+  "  npm run phi -- spv-bench-inspect vessie-local-evidence-bench-portable.json --models",
   "  npm run phi                            # stateless one-line REPL",
   "",
   "PhiShield R3 runs CLI programs inside a killable child process.",
@@ -33,6 +36,7 @@ const HELP = [
   "No model call, SPV connection or network dispatch occurs automatically.",
   "dispatch-local requires a separate explicit confirmation and only reaches 127.0.0.1:11434.",
   "SPV and manual routes cannot be auto-dispatched. Replies are untrusted data.",
+  "spv-bench-inspect validates an operator-exported SPV bench OFFLINE; no model execution.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
 
@@ -166,9 +170,30 @@ async function dispatchLocalCommand(handoffPath, model, id, outputPath) {
   }
 }
 
+async function inspectSpvBenchFile(path, showModelNames = false) {
+  try {
+    const raw = await readLimited(path, SPV_BENCH_MAX_BYTES);
+    const info = inspectSpvBenchJson(raw, { showModelNames });
+    console.log("SPV BENCH: READ_ONLY_UNATTESTED_IMPORT");
+    console.log("Evidence entries:", info.evidenceCount);
+    console.log("Performance entries:", info.performanceCount);
+    console.log("Human review entries:", info.humanReviewCount);
+    console.log("Distinct reported model labels:", info.modelLabelCount);
+    console.log("Performance rows with matching self-review:", info.performanceRowsWithMatchingReview);
+    console.log("No model call, no routing authority, no quality approval.");
+    console.log("Inspect:", JSON.stringify(info.rows, null, 2));
+  } catch (error) {
+    console.error("SPV BENCH REFUSED:", error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
+} else if (args[0] === "spv-bench-inspect" && (args.length === 2 ||
+           (args.length === 3 && args[2] === "--models"))) {
+  await inspectSpvBenchFile(args[1], args.length === 3);
 } else if (args[0] === "verify" && args.length === 2) {
   await verifyFile(args[1]);
 } else if (args[0] === "verify-project" && args.length === 3) {
@@ -189,7 +214,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R7, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R8, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();
