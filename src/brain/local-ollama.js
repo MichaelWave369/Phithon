@@ -12,10 +12,10 @@ export const OLLAMA_ENDPOINT = "http://127.0.0.1:11434/api/generate";
 export const MAX_RESPONSE_BYTES = 65_536;
 export const MAX_GENERATED_CHARS = 8_192;
 export const LOCAL_TIMEOUT_MS = 25_000;
-const MODEL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,127}$/;
+const MODEL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]*(?:\/[A-Za-z0-9][A-Za-z0-9_.-]*)*(?::[A-Za-z0-9][A-Za-z0-9_.-]*)?$/;
 
 export function validateLocalModel(model) {
-  if (typeof model !== "string" || !MODEL_PATTERN.test(model)) {
+  if (typeof model !== "string" || model.length > 128 || !MODEL_PATTERN.test(model)) {
     throw new TypeError("PhiBrain: model must be a valid, explicit local Ollama model name");
   }
   return model;
