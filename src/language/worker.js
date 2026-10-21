@@ -4,10 +4,12 @@
  * Workers protect the UI from stalls; they are not an OS security sandbox.
  */
 import { execute } from "./core.js";
+import { analyzePackage } from "./package.js";
 
 self.onmessage = (event) => {
   try {
     const { source, options } = event.data ?? {};
+    analyzePackage(source, options?.modules ?? {});
     const value = execute(source, options);
     self.postMessage({ ok: true, value });
   } catch (error) {
