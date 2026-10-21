@@ -1,7 +1,7 @@
 {
   "name": "phithon",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "An original, Python-inspired small programming language and browser playground.",
   "engines": {
