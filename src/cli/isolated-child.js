@@ -8,7 +8,8 @@
 import { execute, parse, tokenize } from "../language/core.js";
 
 const MAX_INPUT_BYTES = 900_000;
-let sourceText = "", inputBytes = 0;
+const inputChunks = [];
+let inputBytes = 0;
 
 function send(payload) {
   process.stdout.write(JSON.stringify(payload) + "\n");
@@ -26,9 +27,9 @@ try {
   for await (const chunk of process.stdin) {
     inputBytes += chunk.length;
     if (inputBytes > MAX_INPUT_BYTES) throw new Error("PhiShield: child input limit exceeded");
-    sourceText += chunk.toString("utf8");
+    inputChunks.push(chunk);
   }
-  const request = JSON.parse(sourceText);
+  const request = JSON.parse(Buffer.concat(inputChunks).toString("utf8"));
   if (request === null || typeof request !== "object" || Array.isArray(request)) {
     throw new TypeError("PhiShield: request must be an object");
   }
