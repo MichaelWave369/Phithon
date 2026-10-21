@@ -2,7 +2,21 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R4 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R5 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R5: Source-complete PhiLedger v2 receipts
+
+PhiPack programs now get `phithon.execution-receipt.v2` JSON receipts. Every declared local library's exact source is embedded and SHA-256-hashed, alongside the main program, output, events and execution transcript. The event chain's genesis binds a canonical **module set hash**. Existing standalone v1 receipts still verify without conversion.
+
+```sh
+npm run phi -- --receipt examples/packages/main.phi
+npm run phi -- verify examples/packages/main.phi.receipt.json
+npm run phi -- verify-project examples/packages/main.phi.receipt.json examples/packages/main.phi
+```
+
+`verify` hashes the saved historical snapshot only. `verify-project` also compares that snapshot with the **current** main and module files on disk, so changing a local library becomes visible. Neither command executes code from a receipt.
+
+**No authentication claim:** a new fabricated receipt can be rehashed and pass integrity verification. v2 binds bytes, not authorship, execution or a trusted clock. See [PhiLedger's v1/v2 spec](docs/LEDGER.md).
 
 ## R4: PhiPack local modules
 
@@ -15,7 +29,7 @@ npm run phi -- examples/packages/main.phi
 npm run phi -- check examples/packages/main.phi
 ```
 
-**Important:** R2 receipts cannot bind imported module sources. R4 refuses to seal module-containing runs until a later receipt schema can include their source digests. Module-free receipts continue to work.
+**Receipts:** R4 originally blocked module-containing receipts to avoid incomplete hashes. R5 now emits complete v2 module-bound receipts while still verifying historical v1 receipts.
 
 See the [PhiPack R4 reference](docs/PHIPACK.md).
 
@@ -100,7 +114,7 @@ ledger("R0_DEMO", "complete")
 
 The same interpreter runs in both browser and CLI. See the [language reference](docs/LANGUAGE.md) and [examples](examples/).
 
-## Shipped in R0, R1, R2, R3 and R4
+## Shipped in R0, R1, R2, R3, R4 and R5
 
 - Lexer, parser and scoped interpreter with variables, arithmetic, arrays, functions, recursion, conditions and while loops
 - Builtins: `print`, `len`, `type`, `range`, `fib`, `phi`, and `ledger`
@@ -112,6 +126,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R2 SHA-256 chained JSON receipts with import/export validation
 - R3 fixed-command child runner with deadline, bounded pipes, and nonexecuting syntax checking
 - R4 local import/export modules, manifest loader, circular dependency checks, and browser library editor
+- R5 module-complete SHA-256 receipts, legacy verification and current-project comparison
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -131,7 +146,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R5: module-aware receipt schema, richer syntax and stronger process isolation.
+R6: richer syntax, better package tooling and stronger OS-level confinement.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
