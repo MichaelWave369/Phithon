@@ -1,3 +1,4 @@
+import { installModule } from "./modules.js";
 /**
  * PhiThon R0: independently implemented language, NOT Python-compatible.
  * No JS eval(), host objects, file/network APIs. Budgets are NOT a strong sandbox.
@@ -10,7 +11,7 @@ function buildPhiThon() {
       this.line = token.line; this.column = token.col;
     }
   }
-  const keys = new Set(["let", "fn", "return", "if", "else", "while", "true", "false", "null"]);
+  const keys = new Set(["use", "let", "fn", "return", "if", "else", "while", "true", "false", "null"]);
   const pairs = new Set(["==", "!=", "<=", ">=", "&&", "||"]);
   const singles = new Set("+-*/%!=<>(){}[],;");
   const precedence = { "||": 1, "&&": 2, "==": 3, "!=": 3, "<": 4, "<=": 4, ">": 4, ">=": 4, "+": 5, "-": 5, "*": 6, "/": 6, "%": 6 };
@@ -80,6 +81,10 @@ function buildPhiThon() {
     stmt() {
       const at = this.t();
       if (this.take(";")) return { tag: "empty", at };
+      if (this.take("use")) {
+        const name = this.ident(); this.take(";");
+        return { tag: "use", name, at };
+      }
       if (this.take("let")) {
         const name = this.ident(); this.need("="); const value = this.expr(); this.take(";");
         return { tag: "let", name, value, at };
@@ -288,6 +293,7 @@ function buildPhiThon() {
       tick(n.at);
       switch (n.tag) {
         case "empty": return null;
+        case "use": installModule(n.name, env, { PhiError, num, valid }, n.at); return null;
         case "let": env.define(n.name, evalExpr(n.value, env), n.at); return null;
         case "assign": return env.set(n.name, evalExpr(n.value, env), n.at);
         case "fn": env.define(n.name, { tag: "fn", name: n.name, params: n.params, body: n.body, env }, n.at); return null;
