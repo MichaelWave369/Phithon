@@ -2,7 +2,19 @@
 
 **The Language of the Field.** An original, MIT-licensed, Python-inspired programming language with an in-browser playground and Node.js command-line runner.
 
-> **Status: R6 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+> **Status: R7 experimental.** PhiThon is not Python, not a fork of CPython, and does not execute .py files. Its syntax currently uses braces. The repo contains a real tokenizer, Pratt parser, AST and interpreter.
+
+## R7: Explicit local Ollama dispatch
+
+PhiBrain can now send a **single selected `local` handoff request** to an Ollama server on your own computer. The CLI requires a separate `--confirm-local`, an exact model, request ID and fresh response-journal filename before making any network request. The endpoint is hardwired to `127.0.0.1:11434/api/generate`, with 25-second timeout, response-size caps, no redirects, proxies, DNS, remote fallback or automatic model downloads.
+
+```sh
+npm run phi -- --brain-out handoff.json examples/brain-local.phi
+# Review handoff.json, confirm your local model exists, then:
+npm run phi -- dispatch-local handoff.json --model gemma3:12b --request 1 --out reply.json --confirm-local
+```
+
+The output records either a response from the local server or an **uncertain attempt outcome**. Model-generated text is **unverified** and never automatically executed. Browser use remains export-only; SPV and `manual` routes cannot dispatch through this adapter. See [PhiBrain local Ollama bridge and threat model](docs/PHIBRAIN-OLLAMA.md).
 
 ## R6: Permission-controlled PhiBrain request handoff
 
@@ -12,7 +24,7 @@
 npm run phi -- --brain-out requests.json examples/brain.phi
 ```
 
-The CLI flag grants request staging for that run and writes a JSON envelope marked **NOT_SENT**. In the playground, the per-run checkbox enables staging, and a separate click exports a file. **This is not a live SPV or AI model connection:** no network, model access, token, endpoint, or implicit dispatch is included. Staged prompts are logged as `SIMULATED` events that can be SHA-256-bound into receipts. See [PhiBrain protocol, privacy and security](docs/PHIBRAIN.md).
+The CLI flag grants request staging for that run and writes a JSON envelope marked **NOT_SENT**. In the playground, the per-run checkbox enables staging, and a separate click exports a file. **R6 staged requests only:** no network, model access, token, endpoint, or implicit dispatch is included in this mode. R7 separately adds an opt-in local Ollama CLI consumer. Staged prompts are logged as `SIMULATED` events that can be SHA-256-bound into receipts. See [PhiBrain protocol, privacy and security](docs/PHIBRAIN.md).
 
 ## R5: Source-complete PhiLedger v2 receipts
 
@@ -138,6 +150,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 - R4 local import/export modules, manifest loader, circular dependency checks, and browser library editor
 - R5 module-complete SHA-256 receipts, legacy verification and current-project comparison
 - R6 explicit per-run PhiBrain permission and manual NOT_SENT request export (no AI dispatch)
+- R7 CLI-only explicitly confirmed local Ollama dispatch (one selected request; no SPV integration)
 
 **Security boundary:** PhiThon cannot directly access JavaScript host globals, a shell, disk, or network. Nevertheless this is **not a hardened sandbox**. The browser runtime runs in a killable dedicated Web Worker with a wall-clock timeout. Run only trusted code. `ledger` events are **SIMULATED and in memory**, not cryptographically signed, immutable or persisted.
 
@@ -157,7 +170,7 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R7: explicitly reviewed SPV/Ollama adapter, scoped network grants, richer syntax and stronger OS-level confinement.
+R8: separately reviewed SPV protocol adapter, richer syntax, and stronger OS-level confinement.
 Future: explicit capability enforcement, audited adapters and authenticated signed receipts.
 Later: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
