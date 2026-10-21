@@ -19,7 +19,7 @@ const HELP = [
   "This is NOT a secure OS sandbox for adversarial code.",
   "check parses .phi source without executing it.",
   "verify hashes JSON receipts without executing the included source.",
-  "A valid SHA-256 receipt is NOT a signed identity or proof of execution."
+  "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
 
 async function readLimited(path, maxBytes = 400_000) {
