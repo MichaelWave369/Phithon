@@ -1,0 +1,13 @@
+# R1 modules are opt-in and scoped.
+use math
+use nbg
+
+let numbers = [3, 6, 9]
+print("Mean =", math_mean(numbers))
+print("Sum =", math_sum(numbers))
+print("Hypotenuse =", math_distance(0, 0, 3, 4))
+
+# This is a C_n toy graph, NOT verified NBG research machinery.
+print("Neighbors of node 0 in C6:", nbg_neighbors(6, 0))
+print("Cycle edges:", nbg_cycle(6))
+ledger("R1_MODULE_DEMO", "simulated")
