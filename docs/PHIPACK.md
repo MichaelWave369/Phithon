@@ -70,7 +70,7 @@ In the browser, open **Library Workshop**. Edit individual module sources, then 
 - Modules have independent lexical scopes with prefixed exported bindings, not Python `from ... import` syntax.
 - R4 imports are evaluated when first used within a program execution. No persistent module cache across separate program runs.
 - A package's source files must be trusted. Neither Node subprocess boundaries nor browser Web Workers are hardened hostile-code sandboxes.
-- **R2 receipts do not include imported module source hashes.** R4 therefore blocks receipt generation for runs where any local module registry was loaded rather than producing misleading records. Standalone module-free receipts continue to work; a future receipt schema can properly bind the full module dependency tree.
+- **R5 module-aware receipts:** R4 originally refused to seal programs with local modules. R5 now creates `phithon.execution-receipt.v2` receipts that embed and SHA-256-hash all registered module source. Standalone v1 receipts remain verifiable. These still do not prove that any reported output was genuinely executed.
 - There is no package publishing, dependency installer, semver resolution or remote registry.
 
 **Ledger above ego:** unresolved dependencies and unbound receipts must fail visibly.
