@@ -88,9 +88,9 @@ The same interpreter runs in both browser and CLI. See the [language reference](
 
 ## Next milestones (not implemented)
 
-R2: stronger syntax, package tools, richer library and secure process isolation.
-R3: explicit capability enforcement, verified adapters and auditing.
-Future: reviewed adapters for SPV, NBG and WhiteHatLedger369, plus real versioned ledger receipts.
+R2: stronger syntax, package tools, richer library and isolated CLI processes.
+R3: explicit capability enforcement, audited adapters and proper signed receipts.
+Future: reviewed adapters for SPV, NBG and WhiteHatLedger369.
 
 The core language will never silently grant file, shell, or network access.
 
