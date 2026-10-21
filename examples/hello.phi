@@ -1,0 +1,9 @@
+# PhiThon is an original language with braces.
+let greeting = "Welcome to PhiThon!"
+print(greeting)
+print("Golden ratio:", phi())
+
+fn square(x) {
+  return x * x
+}
+print("6 squared =", square(6))
