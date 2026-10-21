@@ -129,3 +129,7 @@ The following claims are **always false** in the R10 correspondence, regardless 
 For real cross-language behavioral verification, the next step is separately reviewed **explicit test vectors**, fixed inputs/outputs and Vibe preservation obligations, plus reproducible PhiThon execution receipts linked to those tests. A source-hash match alone is not a behavior match.
 
 **Ledger above ego: reported outcomes are not automatically verified facts.**
+
+## R11 next rung: selected behavioral observations
+
+R11 adds a Node CLI-only, separately reviewed `vibe-behavior` command. It checks the R9 source link before running any PhiThon code, then executes no more than eight scalar-input fixtures in separate PhiShield child processes. Expectations are explicitly operator-authored and are **not** automatically derived from Vibe proof briefs. The resulting report records match/mismatch/error status and source/input/output SHA-256 digests without raw input/output strings. Passing examples must not be promoted to an exhaustive Vibe preservation claim. [Full guide](VIBE-BEHAVIOR.md).
