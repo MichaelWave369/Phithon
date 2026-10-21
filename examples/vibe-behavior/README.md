@@ -25,3 +25,13 @@ Each test calls `evaluate(x)` in a fresh bounded PhiShield child, with **no brai
 The expected outputs here were selected by a human for a narrow arithmetic example. **Vibe did not generate or certify these test vectors.** Matching all four inputs does not establish equivalence for other values, all number types, edge cases, arbitrary Vibe semantics, runtime safety, or full intent preservation.
 
 See `../../docs/VIBE-BRIDGE.md` and `../../docs/VIBE-BEHAVIOR.md`.
+
+## R12: seeded numeric properties
+
+The adjacent [`properties.json`](properties.json) is an operator-authored reproducible **affine** property over six bounded integer samples. With a Vibe intent brief and the R9 `source-link.json` created as described above, run:
+
+~~~sh
+npm run phi -- vibe-properties source-link.json intent-brief.json examples/vibe-behavior/contract.vibe examples/vibe-behavior/implementation.phi examples/vibe-behavior/properties.json --out property-report.json
+~~~
+
+This checks *finite sampled behavior only*. It does not mean `Vibe` generated or proved the property. See [R12 finite property guide](../../docs/VIBE-PROPERTIES.md).
