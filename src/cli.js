@@ -450,11 +450,8 @@ async function vibeFullObligationsCommand(fullPath, proofPath, correspondencePat
     const modules=await loadProjectModules(phiPath);
     const behaviorReport=JSON.parse(await readLimited(behaviorPath,100_000));
     const propertyReport=JSON.parse(await readLimited(propertyPath,100_000));
-    const bindings=parseVibeObligationBindingsJson(
-      await readLimited(bindingsPath,MAX_VIBE_OBLIGATION_BINDINGS_BYTES),
-      proofBrief
-    );
-    // A full-proof mapping may contain associations beyond the first ten.
+    // The full inventory may include obligation IDs beyond the compact first ten.
+    // R14 validates bindings against that full projection, not R13's brief sample.
     const rawBindings=JSON.parse(await readLimited(bindingsPath,MAX_VIBE_OBLIGATION_BINDINGS_BYTES));
     const record=await buildFullVibeObligationLedger({
       fullProof,link,intentBrief,proofBrief,correspondence,vibeSource,phiSource,
