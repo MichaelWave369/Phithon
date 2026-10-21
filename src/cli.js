@@ -5,9 +5,10 @@ import { runIsolated } from "./cli/isolate.js";
 import { loadProjectModules } from "./cli/package-loader.js";
 import { createReceipt, createPackageReceipt, verifyReceipt } from "./ledger/receipts.js";
 import { makeBrainHandoff } from "./brain/handoff.js";
+import { validateLocalDispatch, makeDispatchJournal, dispatchAuthorizedLocal } from "./brain/dispatch-local.js";
 
 const HELP = [
-  "PhiThon R6 · The Language of the Field",
+  "PhiThon R7 · The Language of the Field",
   "",
   "Usage:",
   "  npm run phi -- examples/hello.phi",
@@ -16,6 +17,7 @@ const HELP = [
   "  npm run phi -- --receipt examples/packages/main.phi",
   "  npm run phi -- --receipt examples/modules.phi",
   "  npm run phi -- --brain-out requests.json examples/brain.phi",
+  "  npm run phi -- dispatch-local requests.json --model gemma3:12b --request 1 --out reply.json --confirm-local",
   "  npm run phi -- verify examples/modules.phi.receipt.json",
   "  npm run phi -- verify-project myprogram.phi.receipt.json myprogram.phi",
   "  npm run phi                            # stateless one-line REPL",
@@ -29,6 +31,8 @@ const HELP = [
   "verify-project compares a receipt with source and local package on disk.",
   "--brain-out grants brain.requests ONLY for this run, saving NOT_SENT JSON.",
   "No model call, SPV connection or network dispatch occurs automatically.",
+  "dispatch-local requires a separate explicit confirmation and only reaches 127.0.0.1:11434.",
+  "SPV and manual routes cannot be auto-dispatched. Replies are untrusted data.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
 
@@ -119,6 +123,49 @@ async function verifyProject(receiptPath, entryPath) {
   }
 }
 
+async function dispatchLocalCommand(handoffPath, model, id, outputPath) {
+  try {
+    const raw = await readLimited(handoffPath, 32_768);
+    const handoff = JSON.parse(raw);
+    const item = validateLocalDispatch(handoff, {
+      consent: true, model, requestId: Number(id)
+    });
+    // Exclusive, durable intent journal before any network side effect.
+    // Reusing an output filename refuses a second dispatch.
+    const journal = makeDispatchJournal(item);
+    await writeFile(outputPath, JSON.stringify(journal, null, 2) + "\n", {
+      encoding: "utf8", flag: "wx", mode: 0o600
+    });
+    console.error("PhiBrain: local dispatch approved for request", item.id, "model", model);
+    console.error("PhiBrain: fixed destination 127.0.0.1:11434 only");
+    try {
+      const completed = await dispatchAuthorizedLocal(item);
+      await writeFile(outputPath, JSON.stringify(completed, null, 2) + "\n", {
+        encoding: "utf8", flag: "w", mode: 0o600
+      });
+      console.log("PhiBrain: local model response recorded in", outputPath);
+      console.log("Model output is UNVERIFIED and must not be executed as commands.");
+    } catch (error) {
+      const uncertain = {
+        ...journal,
+        status: "ATTEMPTED_OUTCOME_UNCONFIRMED",
+        error: error instanceof Error ? error.message : String(error)
+      };
+      try {
+        await writeFile(outputPath, JSON.stringify(uncertain, null, 2) + "\n", {
+          encoding: "utf8", flag: "w", mode: 0o600
+        });
+      } catch (writeError) {
+        console.error("PhiBrain: could not update dispatch journal:", writeError.message);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error("PhiBrain dispatch NOT confirmed:", error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
@@ -128,6 +175,10 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   await verifyProject(args[1], args[2]);
 } else if (args[0] === "check" && args.length === 2) {
   await check(args[1]);
+} else if (args[0] === "dispatch-local" && args.length === 9 &&
+           args[2] === "--model" && args[4] === "--request" &&
+           args[6] === "--out" && args[8] === "--confirm-local") {
+  await dispatchLocalCommand(args[1], args[3], args[5], args[7]);
 } else if (args[0] === "--brain-out" && args.length === 3) {
   try { await run(await readLimited(args[2]), null, await loadProjectModules(args[2]), args[1]); }
   catch (error) { console.error("Cannot prepare PhiBrain handoff:", error.message); process.exitCode = 1; }
@@ -138,7 +189,7 @@ if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   try { await run(await readLimited(args[0]), null, await loadProjectModules(args[0])); }
   catch (error) { console.error("Cannot open:", error.message); process.exitCode = 1; }
 } else if (args.length === 0) {
-  console.log("PhiThon R6, stateless one-line mode (no package directory). Ctrl+C exits.");
+  console.log("PhiThon R7, stateless one-line mode (no package directory). Ctrl+C exits.");
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "phi>>> " });
   rl.prompt();
   let sequence = Promise.resolve();
