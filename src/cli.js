@@ -15,6 +15,7 @@ const HELP = [
   "  npm run phi -- --receipt examples/packages/main.phi",
   "  npm run phi -- --receipt examples/modules.phi",
   "  npm run phi -- verify examples/modules.phi.receipt.json",
+  "  npm run phi -- verify-project myprogram.phi.receipt.json myprogram.phi",
   "  npm run phi                            # stateless one-line REPL",
   "",
   "PhiShield R3 runs CLI programs inside a killable child process.",
@@ -23,6 +24,7 @@ const HELP = [
   "check parses .phi source and adjacent local package without executing it.",
   "Only regular .phi files named in phithon.pack.json are loaded; never downloaded.",
   "verify checks v1 standalone and v2 module-complete JSON without running it.",
+  "verify-project compares a receipt with source and local package on disk.",
   "A valid SHA-256 receipt is NOT an identity signature or proof of execution."
 ].join("\n");
 
@@ -82,11 +84,37 @@ async function verifyFile(path) {
   }
 }
 
+async function verifyProject(receiptPath, entryPath) {
+  try {
+    const raw = await readLimited(receiptPath, 750_000);
+    const receipt = JSON.parse(raw);
+    const checked = await verifyReceipt(receipt);
+    if (!checked.valid) throw new Error("Invalid receipt: " + checked.reason);
+    const source = await readLimited(entryPath);
+    const modules = await loadProjectModules(entryPath);
+    if (receipt.source !== source) throw new Error("Entry program source differs from receipt");
+    const actualNames = Object.keys(modules).sort();
+    const recorded = receipt.modules ?? {};
+    const recordedNames = Object.keys(recorded).sort();
+    if (actualNames.length !== recordedNames.length ||
+        actualNames.some((name, i) => name !== recordedNames[i] || modules[name] !== recorded[name])) {
+      throw new Error("Local PhiPack module source differs from receipt");
+    }
+    console.log("PROJECT MATCH: program and " + actualNames.length + " local modules match receipt bytes");
+    console.log("Receipt SHA-256:", receipt.receiptHash);
+  } catch (error) {
+    console.error("PROJECT MISMATCH:", error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
   console.log(HELP);
 } else if (args[0] === "verify" && args.length === 2) {
   await verifyFile(args[1]);
+} else if (args[0] === "verify-project" && args.length === 3) {
+  await verifyProject(args[1], args[2]);
 } else if (args[0] === "check" && args.length === 2) {
   await check(args[1]);
 } else if (args[0] === "--receipt" && args.length === 2) {
