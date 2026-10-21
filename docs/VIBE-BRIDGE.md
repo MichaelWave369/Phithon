@@ -133,3 +133,7 @@ For real cross-language behavioral verification, the next step is separately rev
 ## R11 next rung: selected behavioral observations
 
 R11 adds a Node CLI-only, separately reviewed `vibe-behavior` command. It checks the R9 source link before running any PhiThon code, then executes no more than eight scalar-input fixtures in separate PhiShield child processes. Expectations are explicitly operator-authored and are **not** automatically derived from Vibe proof briefs. The resulting report records match/mismatch/error status and source/input/output SHA-256 digests without raw input/output strings. Passing examples must not be promoted to an exhaustive Vibe preservation claim. [Full guide](VIBE-BEHAVIOR.md).
+
+## R12 seeded numeric checks
+
+The new `vibe-properties` CLI extends R11 selected examples with **deterministically generated finite numeric input samples** and narrowly typed operator-declared property checks. It retains R9 source integrity gates, PhiShield child limits, and an explicit `UNATTESTED` provenance. The output does not certify Vibe's full preservation checks. [Full R12 property guide](VIBE-PROPERTIES.md).
